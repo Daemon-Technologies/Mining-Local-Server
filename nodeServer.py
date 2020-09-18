@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
-import subprocess
+from sysCommand import getNodeProcess, startNode, shutDownNode
 
 app = Flask(__name__)
 CORS(app)
@@ -13,17 +13,20 @@ def hello_world():
 @app.route('/startMining')
 def startMining():
     print("startMining")
-    return 'startMining!'
+    t = startNode()
+    return "success" if t else "fail"
 
 @app.route('/getNodeStatus')
 def getNodeStatus():
-    print("getNodeStatus")
-    return 'getNodeStatus!'
+    t = getNodeProcess()
+    print("getNodeStatus", t )
+    return str(t)
 
 @app.route('/stopMining')
 def stopMining():
-    print("stopMining")
-    return 'stopMining!'
+    t = shutDownNode()
+    print("stopMining", t)
+    return "success" if t else "fail"
 
 if __name__ == '__main__':
     app.run(debug=True)
