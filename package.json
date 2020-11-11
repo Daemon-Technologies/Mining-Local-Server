@@ -1,0 +1,26 @@
+{
+  "name": "miningbot-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tyGavinZJU/miningbot-server.git"
+  },
+  "author": "Gavin [gavin@gmail.com]",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/tyGavinZJU/miningbot-server/issues"
+  },
+  "homepage": "https://github.com/tyGavinZJU/miningbot-server#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "nodemon": "^2.0.6",
+    "toml": "^3.0.0"
+  }
+}
