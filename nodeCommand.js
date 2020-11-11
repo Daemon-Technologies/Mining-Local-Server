@@ -67,6 +67,7 @@ function isNodeStart(commands){
 }
 
 function replaceSegment(keyword, value ,strFile){
+    const Verbose = false;
     let start = strFile.search(keyword)
     let end = start
     while (end <= strFile.length){
@@ -74,24 +75,25 @@ function replaceSegment(keyword, value ,strFile){
             break;
         end++
     }
-    console.log(end, strFile[end])
+    if (Verbose) console.log(end, strFile[end])
     
     let injection = `${keyword} = ${value}\n`;
-    console.log("injection", injection)
+    if (Verbose) console.log("injection", injection)
     let result = strFile.slice(0, start) + injection + strFile.slice(end - strFile.length + 1) 
 
     return result
 }
 
 function updateMinerToml(data){
+    const Verbose = false;
     let strFile = fs.readFileSync("./miner.toml", 'utf-8')
-    console.log(data)
+    if (Verbose) console.log(data)
     if (data.seed != undefined){
-        console.log("in")
+        if (Verbose) console.log("in")
         strFile = replaceSegment("seed", `\"${data.seed}\"`, strFile)
     }
         
-    console.log(strFile)
+    if (Verbose) console.log(strFile)
     if (data.burn_fee_cap != undefined)
         strFile = replaceSegment("burn_fee_cap", data.burn_fee_cap, strFile)
     fs.writeFileSync("./miner.toml", strFile , 'utf-8')
@@ -112,8 +114,9 @@ export async function getNodeStatus(){
 }
 
 export async function shutDownNode(){
+    const Verbose = false
     const {status, PID} = await getNodeStatus()
-    console.log(status, PID)
+    if (Verbose) console.log(status, PID)
     if (!status) 
         return { status: 404, data: "No Mining Program is Running Now!" }
     const { stdout, stderr } = child_process.exec(`kill -9 ${PID}`, { shell: true });
@@ -123,7 +126,7 @@ export async function shutDownNode(){
 
 export async function startNode(data){
     const {status, PID} = await getNodeStatus()
-    console.log(status, PID)
+    //console.log(status, PID)
     // check node status
     if (status)
         return { status: 500, data: "Mining program already exists!" }

@@ -8,16 +8,15 @@ const port = 5000
 app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
-    console.log(req.query)
+    //console.log(req.query)
     res.send({status: "local server is online"})
 })
 
 app.post('/startMining', async (req, res)=>{
-    if (req.body.seed != undefined)
-    {
-        console.log(req.body)
+    if (req.body.seed != undefined){
+        //console.log(req.body)
         let t = await startNode(req.body)
-        console.log("res:", t)
+        //console.log("res:", t)
         res.send({status: "local server is online"})
     }
     else{
@@ -32,13 +31,13 @@ app.post('/startMining', async (req, res)=>{
 app.get('/stopMining', async (req, res)=>{
     let t = await shutDownNode();
     res.send(t)
-    console.log(t)
+    //console.log(t)
 })
 
 app.get('/getNodeStatus',  async (req, res)=> {
     let t = await getNodeStatus()
     res.send(t)
-    console.log(t)
+    //console.log(t)
 })
 
 app.listen(port, () => {
