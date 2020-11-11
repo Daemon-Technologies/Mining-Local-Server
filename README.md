@@ -1,1 +1,1 @@
-# miningbot-server
+# Mining Local Server
