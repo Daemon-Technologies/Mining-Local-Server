@@ -1,6 +1,6 @@
 import express from "express"
 import bodyParser from "body-parser"
-import {getNodeStatus} from "./nodeCommand.js"
+import {getNodeStatus, shutDownNode, startNode} from "./nodeCommand.js"
 
 const app = express()
 const port = 5000
@@ -12,17 +12,20 @@ app.get('/', (req, res) => {
     res.send({status: "local server is online"})
 })
 
-app.post('/startMining', (req, res)=>{
-    console.log(req.body)
+app.get('/startMining', async (req, res)=>{
+    let t = await startNode()
+    console.log("res:", t)
+    res.send(t)
 })
 
-app.post('/stopMining', (req, res)=>{
-    console.log(req.body)
+app.get('/stopMining', async (req, res)=>{
+    let t = await shutDownNode();
+    res.send(t)
 })
 
 app.get('/getNodeStatus',  async (req, res)=> {
     let t = await getNodeStatus()
-    console.log(`/getNodeStatus ${t}`)
+    res.send(t)
 })
 
 app.listen(port, () => {

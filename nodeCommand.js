@@ -62,32 +62,62 @@ function isNodeStart(commands){
         if (commands[index].CMD.search(key_word) != -1)
             return {status: true, PID: commands[index].PID}
     }
-    return {status: false}
+    return {status: false, PID: -1}
 }
 
 
 export async function getNodeStatus(){
+    const Verbose = false
     const { stdout, stderr } = child_process.exec('ps -ax | grep stacks-node', { shell: true });
-    let a = false
     for await (const data of stdout) {
-        console.log(`stdout: ${stdout}`)
-        console.log(`stdout from the child: \n ${data}`);
+        if (Verbose) console.log(`stdout: ${stdout}`)
+        if (Verbose) console.log(`stdout from the child: \n ${data}`);
         let commands = splitProcess(data)
-        console.log(isNodeStart(commands))
-        a = true
+        if (Verbose) console.log(isNodeStart(commands))
+        let {status, PID} = isNodeStart(commands)
+        return isNodeStart(commands)
     };
-    console.log(a)
-    return a
+    return {status: false, PID: -1}
 }
 
 export async function shutDownNode(){
-    
+    const {status, PID} = await getNodeStatus()
+    console.log(status, PID)
+    if (!status) 
+        return { status: 404, data: "No Mining Program is Running Now!" }
+    const { stdout, stderr } = child_process.exec(`kill -9 ${PID}`, { shell: true });
+    //console.log("stdout:", stdout)
+    return { status: 200, data: `kill PID ${PID}` }
 }
 
 export async function startNode(){
-    const { stdout, stderr } = child_process.exec('stacks-node start --config=./miner.toml', { shell: true });
-    for await (const data of stdout) {
-        console.log(`stdout from the child: ${data}`);
-        a = true
-    };
+    const {status, PID} = await getNodeStatus()
+    console.log(status, PID)
+    if (status)
+        return { status: 500, data: "Mining program already exists!" }
+    //const { stdout, stderr } = child_process.exec('stacks-node start --config=./miner.toml', { shell: true });
+    
+    let start_node =  child_process.spawn('stacks-node', ['start', '--config=./miner.toml']);
+    
+    
+
+    start_node.stdout.on('data', function (data) {
+        console.log('stdout: ' + data.toString());
+    });
+
+    start_node.stderr.on('data', async function (data) { 
+        console.log('LOG: ' + data.toString());
+        if (data.toString().search("Node will fetch burnchain blocks") != -1){
+            return { status: 200, data: "Mining Program Launched!" }
+        }
+    });
+
+    start_node.on('exit', function (code) {
+        console.log('stacks-node shutdown by system kill');
+    });
+
+    for await (const data of start_node.stdout) {
+        //console.log('stacks-node stdout successfully: ' + data.toString());
+        return { status: 200, data: "Mining Program is Launching!" }
+    }
 }
