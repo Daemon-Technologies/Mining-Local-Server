@@ -1,4 +1,5 @@
 import child_process from "child_process"
+import fs from "fs"
 
 function splitProcess(commands){
     //PID TTY TIME CMD
@@ -65,6 +66,36 @@ function isNodeStart(commands){
     return {status: false, PID: -1}
 }
 
+function replaceSegment(keyword, value ,strFile){
+    let start = strFile.search(keyword)
+    let end = start
+    while (end <= strFile.length){
+        if (strFile.charAt(end) == '\n')
+            break;
+        end++
+    }
+    console.log(end, strFile[end])
+    
+    let injection = `${keyword} = ${value}\n`;
+    console.log("injection", injection)
+    let result = strFile.slice(0, start) + injection + strFile.slice(end - strFile.length + 1) 
+
+    return result
+}
+
+function updateMinerToml(data){
+    let strFile = fs.readFileSync("./miner.toml", 'utf-8')
+    console.log(data)
+    if (data.seed != undefined){
+        console.log("in")
+        strFile = replaceSegment("seed", `\"${data.seed}\"`, strFile)
+    }
+        
+    console.log(strFile)
+    if (data.burn_fee_cap != undefined)
+        strFile = replaceSegment("burn_fee_cap", data.burn_fee_cap, strFile)
+    fs.writeFileSync("./miner.toml", strFile , 'utf-8')
+} 
 
 export async function getNodeStatus(){
     const Verbose = false
@@ -90,17 +121,19 @@ export async function shutDownNode(){
     return { status: 200, data: `kill PID ${PID}` }
 }
 
-export async function startNode(){
+export async function startNode(data){
     const {status, PID} = await getNodeStatus()
     console.log(status, PID)
+    // check node status
     if (status)
         return { status: 500, data: "Mining program already exists!" }
-    //const { stdout, stderr } = child_process.exec('stacks-node start --config=./miner.toml', { shell: true });
     
+    // modify configuration file
+    updateMinerToml(data)
+
+    // start node
     let start_node =  child_process.spawn('stacks-node', ['start', '--config=./miner.toml']);
     
-    
-
     start_node.stdout.on('data', function (data) {
         console.log('stdout: ' + data.toString());
     });

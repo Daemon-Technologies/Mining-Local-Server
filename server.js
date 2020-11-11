@@ -12,20 +12,33 @@ app.get('/', (req, res) => {
     res.send({status: "local server is online"})
 })
 
-app.get('/startMining', async (req, res)=>{
-    let t = await startNode()
-    console.log("res:", t)
-    res.send(t)
+app.post('/startMining', async (req, res)=>{
+    if (req.body.seed != undefined)
+    {
+        console.log(req.body)
+        let t = await startNode(req.body)
+        console.log("res:", t)
+        res.send({status: "local server is online"})
+    }
+    else{
+        res.send({status: "param error"})
+    }
+    
+    //
+    //console.log("res:", t)
+    
 })
 
 app.get('/stopMining', async (req, res)=>{
     let t = await shutDownNode();
     res.send(t)
+    console.log(t)
 })
 
 app.get('/getNodeStatus',  async (req, res)=> {
     let t = await getNodeStatus()
     res.send(t)
+    console.log(t)
 })
 
 app.listen(port, () => {
