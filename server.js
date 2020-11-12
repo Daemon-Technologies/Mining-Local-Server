@@ -7,6 +7,18 @@ const port = 5000
 
 app.use(bodyParser.json());
 
+app.all("*", function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", req.headers.origin || '*');
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+    res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Credentials", true);
+    if (req.method == 'OPTIONS') {
+      res.sendStatus(200);
+    } else {
+      next();
+    }
+})
+
 app.get('/', (req, res) => {
     //console.log(req.query)
     res.send({status: "local server is online"})
@@ -17,10 +29,10 @@ app.post('/startMining', async (req, res)=>{
         //console.log(req.body)
         let t = await startNode(req.body)
         //console.log("res:", t)
-        res.send({status: "local server is online"})
+        res.send(t)
     }
     else{
-        res.send({status: "param error"})
+        res.send({status: 500, data: "param error"})
     }
     
     //
