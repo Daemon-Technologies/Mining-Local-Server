@@ -1,4 +1,5 @@
 *.pyc
 node_modules/
 package-lock.json
+*.toml
 # alias zshconfig="mate ~/.zshrc"
