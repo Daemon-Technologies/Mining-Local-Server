@@ -1,5 +1,6 @@
 import child_process from "child_process"
 import fs from "fs"
+import execa from "execa"
 
 function splitProcess(commands){
     //PID TTY TIME CMD
@@ -134,26 +135,7 @@ export async function startNode(data){
     // modify configuration file
     updateMinerToml(data)
 
-    // start node
-    let start_node =  child_process.spawn('stacks-node', ['start', '--config=./miner.toml']);
-    
-    start_node.stdout.on('data', function (data) {
-        console.log('stdout: ' + data.toString());
-    });
+    let start_node = execa('stacks-node', ['start', '--config=./miner.toml']).stderr.pipe(process.stdout); 
 
-    start_node.stderr.on('data', async function (data) { 
-        console.log('LOG: ' + data.toString());
-        if (data.toString().search("Node will fetch burnchain blocks") != -1){
-            return { status: 200, data: "Mining Program Launched!" }
-        }
-    });
-
-    start_node.on('exit', function (code) {
-        console.log('stacks-node shutdown by system kill');
-    });
-
-    for await (const data of start_node.stdout) {
-        //console.log('stacks-node stdout successfully: ' + data.toString());
-        return { status: 200, data: "Mining Program is Launching!" }
-    }
+    return { status: 200, data: "Mining Program has been Launched! You need to check the LOG info of stacks-node." }
 }

@@ -28,7 +28,7 @@ app.post('/startMining', async (req, res)=>{
     if (req.body.seed != undefined){
         //console.log(req.body)
         let t = await startNode(req.body)
-        //console.log("res:", t)
+        console.log("res:", t)
         res.send(t)
     }
     else{
