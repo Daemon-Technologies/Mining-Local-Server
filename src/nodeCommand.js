@@ -87,7 +87,7 @@ function replaceSegment(keyword, value ,strFile){
 
 function updateMinerToml(data){
     const Verbose = false;
-    let strFile = fs.readFileSync("./miner.toml", 'utf-8')
+    let strFile = fs.readFileSync("./miner-Krypton.toml", 'utf-8')
     if (Verbose) console.log(data)
     if (data.seed != undefined){
         if (Verbose) console.log("in")
@@ -97,7 +97,7 @@ function updateMinerToml(data){
     if (Verbose) console.log(strFile)
     if (data.burn_fee_cap != undefined)
         strFile = replaceSegment("burn_fee_cap", data.burn_fee_cap, strFile)
-    fs.writeFileSync("./miner.toml", strFile , 'utf-8')
+    fs.writeFileSync("./miner-Krypton.toml", strFile , 'utf-8')
 } 
 
 export async function getNodeStatus(){

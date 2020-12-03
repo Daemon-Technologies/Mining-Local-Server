@@ -1,3 +1,0 @@
- 8127 ttys001    0:00.17 mining-bot start --config=./miner.toml
- 8128 ttys001    0:00.00 /bin/sh -c ps -ax | grep mining-bot > nodeStatus.txt
- 8130 ttys001    0:00.00 grep mining-bot
