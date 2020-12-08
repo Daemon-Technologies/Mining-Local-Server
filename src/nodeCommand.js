@@ -7,17 +7,7 @@ function splitProcess(commands){
     const Verbose = false;
     let result = []
     if (Verbose) console.log(typeof(commands))
-    /*
-    for (let i in commands){
-        console.log(i, commands[i])
-        if (commands[i] == '\n'){
-            console.log("enter")
-        }
-        if (commands[i] == ' '){
-            console.log("space")
-        }
-    }
-    */
+
     let commandArray = commands.split('\n')
     if (Verbose) console.log(commandArray)
     for (let i in commandArray){
@@ -56,13 +46,18 @@ function splitProcess(commands){
     return result
 }
 
-function isNodeStart(commands){
+
+
+async function isNodeStart(commands){
     const Verbose = false;
     const key_word = "stacks-node start"
+    
+    let address = await getMinerAddress()
+
     for (let index in commands){
         if (Verbose) console.log(commands[index].CMD.search(key_word))
         if (commands[index].CMD.search(key_word) != -1)
-            return {status: true, PID: commands[index].PID}
+            return {status: true, PID: commands[index].PID, address: address}
     }
     return {status: false, PID: -1}
 }
@@ -86,19 +81,48 @@ function replaceSegment(keyword, value ,strFile){
 }
 
 function updateMinerToml(data){
-    const Verbose = false;
-    let strFile = fs.readFileSync("./miner-Krypton.toml", 'utf-8')
+    const {seed, burn_fee_cap, network} = data
+    const Verbose = true;
+    
+    if (Verbose) console.log(seed, burn_fee_cap, network)
+
+
+    let strFile;
+
+    switch (network) {
+        case "Krypton" | "krypton" : strFile = fs.readFileSync("./conf/miner-Krypton.toml", 'utf-8');
+                        break;
+        case "Xenon" | "xenon" : strFile = fs.readFileSync("./conf/miner-Xenon.toml", 'utf-8');
+                      break;
+        default: strFile = fs.readFileSync("./conf/miner-Krypton.toml", 'utf-8');
+                 break;
+    }
+
     if (Verbose) console.log(data)
-    if (data.seed != undefined){
+    if (seed != undefined){
         if (Verbose) console.log("in")
-        strFile = replaceSegment("seed", `\"${data.seed}\"`, strFile)
+        strFile = replaceSegment("seed", `\"${seed}\"`, strFile)
     }
         
     if (Verbose) console.log(strFile)
-    if (data.burn_fee_cap != undefined)
-        strFile = replaceSegment("burn_fee_cap", data.burn_fee_cap, strFile)
-    fs.writeFileSync("./miner-Krypton.toml", strFile , 'utf-8')
-} 
+    if (burn_fee_cap != undefined)
+        strFile = replaceSegment("burn_fee_cap", burn_fee_cap, strFile)
+
+    switch (network) {
+        case "Krypton" | "krypton": fs.writeFileSync("./conf/miner-Krypton.toml", strFile , 'utf-8')
+                        break;
+        case "Xenon" | "xenon": fs.writeFileSync("./conf/miner-Xenon.toml", strFile , 'utf-8')
+                      break;
+        default: fs.writeFileSync("./conf/miner-Krypton.toml", strFile , 'utf-8')
+                 break;
+    }
+    
+}
+
+async function getMinerAddress(){
+    let strFile = fs.readFileSync("./Miner.txt", 'utf-8');
+    return strFile;
+}
 
 export async function getNodeStatus(){
     const Verbose = false
@@ -108,7 +132,6 @@ export async function getNodeStatus(){
         if (Verbose) console.log(`stdout from the child: \n ${data}`);
         let commands = splitProcess(data)
         if (Verbose) console.log(isNodeStart(commands))
-        let {status, PID} = isNodeStart(commands)
         return isNodeStart(commands)
     };
     return {status: false, PID: -1}
@@ -126,6 +149,11 @@ export async function shutDownNode(){
 }
 
 export async function startNode(data){
+    const Verbose = true
+    const {seed, burn_fee_cap, network, address} = data
+
+    if (Verbose) console.log(seed, burn_fee_cap, network)
+    
     const {status, PID} = await getNodeStatus()
     //console.log(status, PID)
     // check node status
@@ -135,7 +163,17 @@ export async function startNode(data){
     // modify configuration file
     updateMinerToml(data)
 
-    let start_node = execa('stacks-node', ['start', '--config=./miner.toml']).stderr.pipe(process.stdout); 
+    switch (network) {
+        case "Krypton" | "krypton" : execa('stacks-node', ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
+                        break;
+        case "Xenon" | "xenon" : execa('stacks-node', ['start', '--config=./conf/miner-Xenon.toml']).stderr.pipe(process.stdout); 
+                      break;
+        default: execa('stacks-node', ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
+                 break;
+    }
 
-    return { status: 200, data: "Mining Program has been Launched! You need to check the LOG info of stacks-node." }
+    //
+    fs.writeFileSync("Miner.txt", address , 'utf-8')
+
+    return { status: 200, data: "Mining Program has been Launched! You can check the LOG info of stacks-node." }
 }

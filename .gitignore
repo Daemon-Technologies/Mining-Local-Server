@@ -1,5 +1,9 @@
 *.pyc
 node_modules/
 package-lock.json
-*.toml
+# *.toml
 # alias zshconfig="mate ~/.zshrc"
+yarn.lock
+
+Miner.txt
+.DS_Store
