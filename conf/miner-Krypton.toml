@@ -3,7 +3,7 @@ rpc_bind = "0.0.0.0:20443"
 p2p_bind = "0.0.0.0:20444"
 bootstrap_node = "048dd4f26101715853533dee005f0915375854fd5be73405f679c1917a5d4d16aaaf3c4c0d7a9c132a36b8c5fe1287f07dad8c910174d789eb24bdfb5ae26f5f27@krypton.blockstack.org:20444"
 miner = true
-seed = ""
+seed = "6d7803411d5799cb9f070e68d776d2471467ded8cf528ea8d32ba76c32e4948e01"
 
 [burnchain]
 chain = "bitcoin"
@@ -12,7 +12,7 @@ peer_host = "bitcoind.krypton.blockstack.org"
 rpc_port = 18443
 peer_port = 18444
 process_exit_at_block_height = 5130
-burn_fee_cap = 99400
+burn_fee_cap = 80000
 
 [[mstx_balance]]
 address = "STB44HYPYAT2BB2QE513NSP81HTMYWBJP02HPGK6"

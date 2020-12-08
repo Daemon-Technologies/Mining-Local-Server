@@ -46,13 +46,18 @@ function splitProcess(commands){
     return result
 }
 
-function isNodeStart(commands){
+
+
+async function isNodeStart(commands){
     const Verbose = false;
     const key_word = "stacks-node start"
+    
+    let address = await getMinerAddress()
+
     for (let index in commands){
         if (Verbose) console.log(commands[index].CMD.search(key_word))
         if (commands[index].CMD.search(key_word) != -1)
-            return {status: true, PID: commands[index].PID}
+            return {status: true, PID: commands[index].PID, address: address}
     }
     return {status: false, PID: -1}
 }
@@ -85,11 +90,11 @@ function updateMinerToml(data){
     let strFile;
 
     switch (network) {
-        case "Krypton": strFile = fs.readFileSync("./miner-Krypton.toml", 'utf-8');
+        case "Krypton" | "krypton" : strFile = fs.readFileSync("./conf/miner-Krypton.toml", 'utf-8');
                         break;
-        case "Xenon": strFile = fs.readFileSync("./miner-Xenon.toml", 'utf-8');
+        case "Xenon" | "xenon" : strFile = fs.readFileSync("./conf/miner-Xenon.toml", 'utf-8');
                       break;
-        default: strFile = fs.readFileSync("./miner-Krypton.toml", 'utf-8');
+        default: strFile = fs.readFileSync("./conf/miner-Krypton.toml", 'utf-8');
                  break;
     }
 
@@ -104,15 +109,20 @@ function updateMinerToml(data){
         strFile = replaceSegment("burn_fee_cap", burn_fee_cap, strFile)
 
     switch (network) {
-        case "Krypton": fs.writeFileSync("./miner-Krypton.toml", strFile , 'utf-8')
+        case "Krypton" | "krypton": fs.writeFileSync("./conf/miner-Krypton.toml", strFile , 'utf-8')
                         break;
-        case "Xenon": fs.writeFileSync("./miner-Xenon.toml", strFile , 'utf-8')
+        case "Xenon" | "xenon": fs.writeFileSync("./conf/miner-Xenon.toml", strFile , 'utf-8')
                       break;
-        default: fs.writeFileSync("./miner-Krypton.toml", strFile , 'utf-8')
+        default: fs.writeFileSync("./conf/miner-Krypton.toml", strFile , 'utf-8')
                  break;
     }
     
-} 
+}
+
+async function getMinerAddress(){
+    let strFile = fs.readFileSync("./Miner.txt", 'utf-8');
+    return strFile;
+}
 
 export async function getNodeStatus(){
     const Verbose = false
@@ -122,7 +132,6 @@ export async function getNodeStatus(){
         if (Verbose) console.log(`stdout from the child: \n ${data}`);
         let commands = splitProcess(data)
         if (Verbose) console.log(isNodeStart(commands))
-        let {status, PID} = isNodeStart(commands)
         return isNodeStart(commands)
     };
     return {status: false, PID: -1}
@@ -141,7 +150,7 @@ export async function shutDownNode(){
 
 export async function startNode(data){
     const Verbose = true
-    const {seed, burn_fee_cap, network} = data
+    const {seed, burn_fee_cap, network, address} = data
 
     if (Verbose) console.log(seed, burn_fee_cap, network)
     
@@ -155,13 +164,16 @@ export async function startNode(data){
     updateMinerToml(data)
 
     switch (network) {
-        case "Krypton": execa('stacks-node', ['start', '--config=./miner-Krypton.toml']).stderr.pipe(process.stdout); 
+        case "Krypton" | "krypton" : execa('stacks-node', ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
                         break;
-        case "Xenon": execa('stacks-node', ['start', '--config=./miner-Xenon.toml']).stderr.pipe(process.stdout); 
+        case "Xenon" | "xenon" : execa('stacks-node', ['start', '--config=./conf/miner-Xenon.toml']).stderr.pipe(process.stdout); 
                       break;
-        default: execa('stacks-node', ['start', '--config=./miner-Krypton.toml']).stderr.pipe(process.stdout); 
+        default: execa('stacks-node', ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
                  break;
     }
+
+    //
+    fs.writeFileSync("Miner.txt", address , 'utf-8')
 
     return { status: 200, data: "Mining Program has been Launched! You can check the LOG info of stacks-node." }
 }

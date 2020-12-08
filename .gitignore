@@ -4,3 +4,5 @@ package-lock.json
 # *.toml
 # alias zshconfig="mate ~/.zshrc"
 yarn.lock
+
+.DS_Store
