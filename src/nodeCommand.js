@@ -1,6 +1,7 @@
 import child_process from "child_process"
 import fs from "fs"
 import execa from "execa"
+import crypto from "crypto"
 
 function splitProcess(commands){
     //PID TTY TIME CMD
@@ -44,22 +45,6 @@ function splitProcess(commands){
         
     }
     return result
-}
-
-
-
-async function isNodeStart(commands){
-    const Verbose = false;
-    const key_word = "stacks-node start"
-    
-    let address = await getMinerAddress()
-
-    for (let index in commands){
-        if (Verbose) console.log(commands[index].CMD.search(key_word))
-        if (commands[index].CMD.search(key_word) != -1)
-            return {status: true, PID: commands[index].PID, address: address}
-    }
-    return {status: false, PID: -1}
 }
 
 function replaceSegment(keyword, value ,strFile){
@@ -124,9 +109,62 @@ async function getMinerAddress(){
     return strFile;
 }
 
+async function isNodeStart(commands){
+    const Verbose = false;
+    const key_word = "stacks-node start"
+    
+    let address = await getMinerAddress()
+
+    for (let index in commands){
+        if (Verbose) console.log(commands[index].CMD.search(key_word))
+        if (commands[index].CMD.search(key_word) != -1)
+            return {status: true, PID: commands[index].PID, address: address}
+    }
+    return {status: 500, PID: -3}
+}
+
+/* nodeStatus 
+    -1 no Mining-Local-Server Started
+    -2 Got Mining-Local-Server, but no stacks-node found
+    -3 Found stacks-node, but no PID of stacks-node runs
+    else PID nodeStatus is running.
+*/
+
+async function checkStacksNodeExists(){
+    try{
+        let stat = await fs.statSync('./stacks-node').isFile()
+        console.log("success:", stat)
+        return true
+    }
+    catch(error){  
+        console.log("no stacks-node found error:",error)
+        return false
+    }
+}
+
+function checkStacksNodeMD5(){
+    let rs = fs.createReadStream('./stacks-node');
+    
+    let hash = crypto.createHash('md5');
+    rs.on('data', hash.update.bind(hash));
+    
+    return new Promise(function(resolve){
+            rs.on('end', function () {
+                let result = hash.digest('hex')
+                console.log("in here:", result);
+                resolve(result);
+            });   
+        });
+}
+
 export async function getNodeStatus(){
     const Verbose = false
+    if (!checkStacksNodeExists) return {status: 500, PID: -2}
+
     const { stdout, stderr } = child_process.exec('ps -ax | grep stacks-node', { shell: true });
+    let a  = await checkStacksNodeMD5()
+    console.log("in there:", a)
+
     for await (const data of stdout) {
         if (Verbose) console.log(`stdout: ${stdout}`)
         if (Verbose) console.log(`stdout from the child: \n ${data}`);
@@ -134,7 +172,7 @@ export async function getNodeStatus(){
         if (Verbose) console.log(isNodeStart(commands))
         return isNodeStart(commands)
     };
-    return {status: false, PID: -1}
+    return {status: 500, PID: -3}
 }
 
 export async function shutDownNode(){
@@ -150,28 +188,42 @@ export async function shutDownNode(){
 
 export async function startNode(data){
     const Verbose = true
+
+    // Check stacks-node exists
+    if (!checkStacksNodeExists()) 
+        return { status : 404, data : "stacks-node doesn't exist, please download it"}
+    // check stacks-node md5
+
+    
+
+
     const {seed, burn_fee_cap, network, address} = data
 
     if (Verbose) console.log(seed, burn_fee_cap, network)
     
     const {status, PID} = await getNodeStatus()
-    //console.log(status, PID)
+    console.log(status, PID)
     // check node status
     if (status)
         return { status: 500, data: "Mining program already exists!" }
     
     // modify configuration file
     updateMinerToml(data)
+    try {
 
-    switch (network) {
-        case "Krypton" | "krypton" : execa('stacks-node', ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
+        switch (network) {
+            case "Krypton":{
+                            let a = fs.chmodSync("./stacks-node",'0777')
+                            execa('./stacks-node', ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
+                            break;}
+            case "Xenon": execa('./stacks-node', ['start', '--config=./conf/miner-Xenon.toml']).stderr.pipe(process.stdout); 
                         break;
-        case "Xenon" | "xenon" : execa('stacks-node', ['start', '--config=./conf/miner-Xenon.toml']).stderr.pipe(process.stdout); 
-                      break;
-        default: execa('stacks-node', ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
-                 break;
+            default: execa('./stacks-node', ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
+                    break;
+        }
+    }catch(error){
+        console.log(error)
     }
-
     //
     fs.writeFileSync("Miner.txt", address , 'utf-8')
 
