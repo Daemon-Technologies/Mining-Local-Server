@@ -7,6 +7,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 
 const app = express()
+const clientApp = express()
 const port = 5000
 
 let httpServer = createServer(app) 
@@ -15,7 +16,7 @@ const io = new Server(httpServer, {})
 import os from "os"
 import fs from "fs"
 import request from "request"
-import { setInterval } from "timers";
+import {checkStacksNodeExists} from './utils/stacksNode.js'
 
 function selectSystem(){
     console.log(os.platform())
@@ -24,9 +25,13 @@ function selectSystem(){
 
 io.on('connection', (socket) => {
 
-    socket.on("download", (msg ,b) => {
+    socket.on("download", async (msg ,b) => {
         console.log(msg, b)
-        
+        let exists = await checkStacksNodeExists()
+        console.log(exists)
+        if (exists) {
+            return;
+        }
         let system = selectSystem()
         let file_url = 'https://github.com/tyGavinZJU/mining-program/releases/download/1.0.0/stacks-node-'
         switch (system){
@@ -136,6 +141,17 @@ app.get('/download', async (req, res)=>{
 })
 
 httpServer.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`)
+    console.log(`Local Server listening at http://localhost:${port}`)
 })
   
+
+import path from 'path'
+
+clientApp.listen(8000, () => {
+    console.log(`Mining-Bot Client listening at http://localhost:8000`)
+})
+clientApp.use(express.static('dist'));
+
+clientApp.get('/*', function (req, res) {
+  res.sendFile('dist/index.html');
+});
