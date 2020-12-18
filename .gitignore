@@ -4,6 +4,7 @@ package-lock.json
 # *.toml
 # alias zshconfig="mate ~/.zshrc"
 yarn.lock
+stacks-node
 
 Miner.txt
 .DS_Store
