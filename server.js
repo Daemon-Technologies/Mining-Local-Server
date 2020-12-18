@@ -143,10 +143,7 @@ app.get('/download', async (req, res)=>{
 httpServer.listen(port, () => {
     console.log(`Local Server listening at http://localhost:${port}`)
 })
-  
-
-import path from 'path'
-
+/*
 clientApp.listen(8000, () => {
     console.log(`Mining-Bot Client listening at http://localhost:8000`)
 })
@@ -155,3 +152,4 @@ clientApp.use(express.static('dist'));
 clientApp.get('/*', function (req, res) {
   res.sendFile('dist/index.html');
 });
+*/
