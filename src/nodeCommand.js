@@ -244,7 +244,7 @@ export async function shutDownNode(){
     if (Verbose) console.log(status, PID)
     if (!status) 
         return { status: 404, data: "No Mining Program is Running Now!" }
-    const { stdout, stderr } = child_process.exec(`kill -9 ${PID}`, { shell: true });
+    const { stdout, stderr } = child_process.exec(`kill -15 ${PID}`, { shell: true });
     //console.log("stdout:", stdout)
     return { status: 200, data: `kill PID ${PID}` }
 }
