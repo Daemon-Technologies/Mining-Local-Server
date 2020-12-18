@@ -33,9 +33,9 @@ io.on('connection', (socket) => {
             return;
         }
         let system = selectSystem()
-        let file_url = 'https://github.com/tyGavinZJU/mining-program/releases/download/1.0.0/stacks-node-'
+        let file_url = 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/1.0.0/stacks-node-'
         switch (system){
-            case "darwin": file_url+=system
+            case "darwin": file_url+="macos"
                            break;
             case "linux":  file_url+=system
                            break;
@@ -68,7 +68,7 @@ io.on('connection', (socket) => {
         });
 
         req.on('end', function() {
-            console.log("say something")
+            //console.log("say something")
             io.emit("download_info", lastPercent)
             io.emit("download_complete", 1)
             percent = 1
@@ -143,13 +143,12 @@ app.get('/download', async (req, res)=>{
 httpServer.listen(port, () => {
     console.log(`Local Server listening at http://localhost:${port}`)
 })
-/*
+
 clientApp.listen(8000, () => {
     console.log(`Mining-Bot Client listening at http://localhost:8000`)
 })
 clientApp.use(express.static('dist'));
 
 clientApp.get('/*', function (req, res) {
-  res.sendFile('dist/index.html');
+  res.sendFile('dist/index.html', { root: '.' });
 });
-*/
