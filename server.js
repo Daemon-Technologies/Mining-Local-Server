@@ -35,7 +35,7 @@ io.on('connection', (socket) => {
         let system = selectSystem()
         let file_url = 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/1.0.0/stacks-node-'
         switch (system){
-            case "darwin": file_url+="macos"
+            case "darwin": file_url+="mac"
                            break;
             case "linux":  file_url+=system
                            break;
