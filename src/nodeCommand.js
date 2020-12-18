@@ -152,7 +152,7 @@ function getStacksNodeMD5(){
         rs.on('data', hash.update.bind(hash));
             rs.on('end', function () {
                 let result = hash.digest('hex')
-                console.log("in here:", result);
+                //console.log("in here:", result);
                 resolve(result);
             });   
         });
@@ -160,7 +160,7 @@ function getStacksNodeMD5(){
 
 async function checkStacksNodeMD5(){
     let md5Result = await getStacksNodeMD5()
-    console.log("md5Result:",md5Result)
+    //console.log("md5Result:",md5Result)
     let system = selectSystem()
     let darwin_md5 = "c93d51447dfd5a1c737dc1717117b933"
     let linux_md5 = "5557c6ebdfded15e3caef6e3dc7d4643"
