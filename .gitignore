@@ -6,5 +6,8 @@ package-lock.json
 yarn.lock
 stacks-node
 
+conf/
+dist/
+
 Miner.txt
 .DS_Store
