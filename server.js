@@ -35,7 +35,7 @@ io.on('connection', (socket) => {
         let system = selectSystem()
         let file_url = 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/1.0.0/stacks-node-'
         switch (system){
-            case "darwin": file_url+="macos"
+            case "darwin": file_url+="mac"
                            break;
             case "linux":  file_url+=system
                            break;
@@ -79,6 +79,10 @@ io.on('connection', (socket) => {
             total = data.headers[ 'content-length' ];
             console.log("response:", data.headers[ 'content-length' ] );
         });
+
+        req.on('error', function (err){
+            console.log(err)
+        })
     });
     console.log("user connected");
 })
