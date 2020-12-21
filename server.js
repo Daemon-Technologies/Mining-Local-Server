@@ -1,7 +1,6 @@
 import express from "express"
 import bodyParser from "body-parser"
 import { getNodeStatus, shutDownNode, startNode } from "./src/nodeCommand.js"
-import { download } from './src/downloadBinary.js'
 
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -13,18 +12,13 @@ const port = 5000
 let httpServer = createServer(app) 
 const io = new Server(httpServer, {})
 
-import os from "os"
+
 import fs from "fs"
 import request from "request"
 import {checkStacksNodeExists} from './utils/stacksNode.js'
-
-function selectSystem(){
-    console.log(os.platform())
-    return os.platform()
-}
+import {selectSystem} from './utils/utils.js'
 
 io.on('connection', (socket) => {
-
     socket.on("download", async (msg ,b) => {
         console.log(msg, b)
         let exists = await checkStacksNodeExists()
@@ -61,10 +55,7 @@ io.on('connection', (socket) => {
             if (percent - lastPercent > 0.01){
                 lastPercent = percent
                 io.emit("download_info", lastPercent)
-            }
-            
-            //console.log(percent);
-        
+            }    
         });
 
         req.on('end', function() {
@@ -73,12 +64,15 @@ io.on('connection', (socket) => {
             io.emit("download_complete", 1)
             percent = 1
         });
-        console.log(percent)
         
-        req.on( 'response', function ( data ) {
+        req.on( 'response', function (data) {
             total = data.headers[ 'content-length' ];
             console.log("response:", data.headers[ 'content-length' ] );
         });
+
+        req.on('error', function (err){
+            console.log(err)
+        })
     });
     console.log("user connected");
 })
@@ -112,33 +106,21 @@ app.post('/startMining', async (req, res)=>{
     }
     else{
         res.send({status: 500, data: "param error"})
-    }
-    
-    //
-    //console.log("res:", t)
-    
+    }   
 })
 
 app.get('/stopMining', async (req, res)=>{
     let t = await shutDownNode();
     console.log(t)
     res.send(t)
-    //console.log(t)
 })
 
 app.get('/getNodeStatus',  async (req, res)=> {
     let t = await getNodeStatus()
     console.log(t)
     res.send(t)
-    //console.log(t)
 })
 
-app.get('/download', async (req, res)=>{
-    let t = await download(io);
-    //console.log(t)
-    res.send(t)
-    //console.log(t)
-})
 
 httpServer.listen(port, () => {
     console.log(`Local Server listening at http://localhost:${port}`)
