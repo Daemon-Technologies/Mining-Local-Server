@@ -3,6 +3,7 @@ import fs from "fs"
 import execa from "execa"
 import crypto from "crypto"
 import os from "os"
+import request from "request"
 
 function splitProcess(commands){
     //PID TTY TIME CMD
@@ -249,6 +250,26 @@ export async function shutDownNode(){
     return { status: 200, data: `kill PID ${PID}` }
 }
 
+function importaddressRPC(address){
+    return new Promise(function(resolve, reject){
+        request.post('http://bitcoind.krypton.blockstack.org:18443', 
+            {json:{"id":"stacks",
+                "jsonrpc":"2.0",
+                "method":"importaddress",
+                "params":[ address, "testing" , false ]}}, function (err, response, body) {
+                    if (err) {
+                        reject(console.error('rpc call failed:', err));
+                    }
+                    console.log( "importaddress rpc call succeed, body is :", body);
+                    console.log("sleep for 15 seconds to import address in bitcoin node")
+                    setTimeout(function(){
+                        resolve(body)
+                    },15000)
+                    
+                })
+    })
+}
+
 export async function startNode(data){
     const Verbose = true
 
@@ -269,10 +290,11 @@ export async function startNode(data){
     }
     
 
-    // Check if node running
+
+    // Check node status
     const {status, PID} = await getNodeStatus()
     console.log(status, PID)
-    // check node status
+
     if (PID > 0)
         return { status: 500, data: "Mining program already exists!" }
     
@@ -282,6 +304,21 @@ export async function startNode(data){
     if (Verbose) console.log(seed, burn_fee_cap, network)
     updateMinerToml(data)
 
+    // Import Bitcoin Address to krypton bitcoin node
+    // https://github.com/blockstack/stacks-blockchain/issues/2200
+    /*
+    curl -X "POST" "http://bitcoind.krypton.blockstack.org:18443" \
+    -H 'Content-Type: application/json; charset=utf-8' \
+    -d $'{
+        "id":"stacks",
+        "jsonrpc":"2.0",
+        "method":"importaddress",
+        "params":["<YOUR_ADDRESS>","testing",false]
+    }'
+    */
+    let rpcResult = await importaddressRPC(address)
+    console.log(rpcResult)
+    
     // Start Node
 
     try {
