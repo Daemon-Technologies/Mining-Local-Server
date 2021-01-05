@@ -3,12 +3,18 @@ import bodyParser from "body-parser"
 import { getNodeStatus, shutDownNode, startNode } from "./src/rpc.js"
 import { createWebsocketChannel } from './src/websocket.js'
 import { createServer } from "http";
+import { aes256Decrypt, keyGen } from './utils/key.js'
 
 
 const app = express()
 const clientApp = express()
 const port = 5000
 let httpServer = createServer(app) 
+
+console.log(process.argv)
+const password = `${process.argv[3] || process.argv[2]}`
+console.log(password)
+console.log(keyGen(password))
 
 app.use(bodyParser.json());
 
@@ -42,15 +48,43 @@ app.get('/', (req, res) => {
 })
 
 app.post('/startMining', async (req, res)=>{
-    if (req.body.seed != undefined){
-        //console.log(req.body)
-        let t = await startNode(req.body)
-        console.log("res:", t)
-        res.send(t)
+    let body = req.body;
+    let r = await aes256Decrypt(req.body.seed.seedEnc, keyGen(password), req.body.seed.iv, req.body.seed.authTag)
+    console.log("response:", r)
+    /*
+    {
+      address: 'mhQcXvMokx2HRb4zKhe8qDR5SQEft48VMX',
+      burn_fee_cap: 20000,
+      debugMode: true,
+      network: 'Krypton',
+      burnchainInfo: {
+        password: 'blockstacksystem',
+        peerHost: 'bitcoind.xenon.blockstack.org',
+        peerPort: 18333,
+        rpcPort: 18332,
+        username: 'blockstack'
+      },
+      seed: {
+        authTag: 'ec1863a1513c736d1e7c3adceebebd46',
+        iv: 'c54bd149288ea99193b303a75c8dbb53',
+        seedEnc: 'DYhFz1/+VijXFSAqFD7SNaLYO/oWgvqzRtH/wQW1zr3F29cmFGactu5Q2iMJbNQNt6I+SGuafHcb2hh+QsXyTewK'
+      }
+    }
+    */
+    console.log(body)
+    if (r && body.address && body.burn_fee_cap && body.debugMode!== undefined 
+          && body.network && body.burnchainInfo)
+    {
+        console.log("in")
+        console.log(req.body)
+        let r = await startNode(body, r)
+        console.log("res:", r)
+        res.send(r)
     }
     else{
         res.send({status: 500, data: "param error"})
     }   
+
 })
 
 app.get('/stopMining', async (req, res)=>{
@@ -59,8 +93,9 @@ app.get('/stopMining', async (req, res)=>{
     res.send(t)
 })
 
-app.get('/getNodeStatus',  async (req, res)=> {
-    let t = await getNodeStatus()
+app.post('/getNodeStatus',  async (req, res)=> {
+    let body = req.body;
+    let t = await getNodeStatus(body)
     console.log(t)
     res.send(t)
 })

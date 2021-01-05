@@ -2,7 +2,7 @@ import child_process from "child_process"
 import fs from "fs"
 import execa from "execa"
 import request from "request"
-import { selectSystem} from '../utils/utils.js'
+import { selectSystem } from '../utils/utils.js'
 import { checkStacksNodeMD5, getStacksNodeMD5, checkStacksNodeExists, deleteStacksNode, replaceSegment, getMinerAddress, isNodeStart } from '../utils/stacksNode.js'
 import { splitProcess } from '../utils/sysCommand.js'
 
@@ -53,21 +53,22 @@ function updateMinerToml(data){
     else PID nodeStatus is running.
 */
 
-export async function getNodeStatus(){
+export async function getNodeStatus(data){
+    const { network } = data
     const Verbose = false
     //Check node exists
-    let exists = await checkStacksNodeExists()
+    let exists = await checkStacksNodeExists(network)
     if (!exists) {
         console.log("Node doesn't exist!")
         return {status: 500, PID: -2, msg: "Got Mining-Local-Server, but no stacks-node found"}
     }
     console.log("Stacks-node found")
     //Check node md5
-    let md5_status  = await checkStacksNodeMD5()
+    let md5_status  = await checkStacksNodeMD5(network)
     console.log(md5_status)
     if (!md5_status){
         console.log("file md5 is wrong, deleting")
-        let deleteResult = await deleteStacksNode()
+        let deleteResult = await deleteStacksNode(network)
         if (deleteResult){
             return { status : 500, PID: -3 , msg:"Found stacks-node, but stacks-node is incomplete. Will delete it, delete successfully."}
         }
@@ -84,8 +85,8 @@ export async function getNodeStatus(){
         if (Verbose) console.log(`stdout: ${stdout}`)
         if (Verbose) console.log(`stdout from the child: \n ${data}`);
         let commands = splitProcess(data)
-        if (Verbose) console.log(isNodeStart(commands))
-        return isNodeStart(commands)
+        if (Verbose) console.log(isNodeStart(commands, network))
+        return isNodeStart(commands, network)
     };
     return {status: 500, PID: -5, msg: "Found stacks-node, but no PID of stacks-node runs"}
 }
@@ -121,12 +122,25 @@ function importaddressRPC(address){
     })
 }
 
-export async function startNode(data){
-
+export async function startNode(data, seed){
+    /*
+        {
+            address: 'mhQcXvMokx2HRb4zKhe8qDR5SQEft48VMX',
+            burn_fee_cap: 20000,
+            debugMode: true,
+            network: 'Krypton',
+            burnchainInfo:{
+                "password": "blockstacksystem",
+                "peerHost": "bitcoind.xenon.blockstack.org",
+                "peerPort": 18333,
+                "rpcPort": 18332,
+                "username": "blockstack"
+            },
+        }
+    */
     //2021.1.3 support debug mode & 
     // const { seed, burn_fee_cap, network, address, debug } = data
-
-    // Check Encrypted Message
+    const { burn_fee_cap, network, address, debugMode, burnchainInfo } = data
     
     const Verbose = true
 
@@ -137,7 +151,6 @@ export async function startNode(data){
     // Check stacks-node md5
     let md5_status = checkStacksNodeMD5()
     
-
     if (!md5_status){
         let deleteResult = await deleteStacksNode()
         if (deleteResult)
@@ -173,24 +186,24 @@ export async function startNode(data){
         "params":["<YOUR_ADDRESS>","testing",false]
     }'
     */
-    let rpcResult = await importaddressRPC(address)
-    console.log(rpcResult)
+    //let rpcResult = await importaddressRPC(address)
+    //console.log(rpcResult)
     
     // Start Node
-
     try {
         switch (network) {
-            case "Krypton":{
-                            let a = fs.chmodSync("./stacks-node",'0777')
+            case "Krypton": fs.chmodSync("./stacks-node-krypton",'0777')
                             execa('./stacks-node', ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
-                            break;}
-            case "Xenon": execa('./stacks-node', ['start', '--config=./conf/miner-Xenon.toml']).stderr.pipe(process.stdout); 
-                        break;
+                            break;
+            case "Xenon":   fs.chmodSync("./stacks-node-krypton",'0777')
+                            execa('./stacks-node', ['start', '--config=./conf/miner-Xenon.toml']).stderr.pipe(process.stdout); 
+                            break;
             default: execa('./stacks-node', ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
                     break;
         }
     } catch(error){
         console.log(error)
+        return { status : 403, data : "execute stacks-node error"}  
     }
     // Update Miner Info
     fs.writeFileSync("Miner.txt", address , 'utf-8')
