@@ -86,7 +86,7 @@ export function deleteStacksNode(network){
 }
 
 export function replaceSegment(keyword, value ,strFile){
-    const Verbose = false;
+    const Verbose = true;
     let start = strFile.search(keyword)
     let end = start
     while (end <= strFile.length){
@@ -94,7 +94,7 @@ export function replaceSegment(keyword, value ,strFile){
             break;
         end++
     }
-    if (Verbose) console.log(end, strFile[end])
+    if (Verbose) console.log(start, end)
     
     let injection = `${keyword} = ${value}\n`;
     if (Verbose) console.log("injection", injection)

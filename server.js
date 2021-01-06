@@ -12,7 +12,8 @@ const port = 5000
 let httpServer = createServer(app) 
 
 //console.log(process.argv)
-const password = `${process.argv[3] || process.argv[2]}`
+let password = "12345678" //default password
+password = `${process.argv[3] || process.argv[2]}`
 //console.log(password)
 //console.log(keyGen(password))
 
@@ -74,9 +75,9 @@ app.post('/startMining', async (req, res)=>{
     if (r && body.address && body.burn_fee_cap && body.debugMode!== undefined 
           && body.network && body.burnchainInfo)
     {
-        let r = await startNode(body, r)
-        console.log("res:", r)
-        res.send(r)
+        let t = await startNode(body, r)
+        console.log("res:", t)
+        res.send(t)
     }
     else{
         res.send({status: 500, data: "param error"})

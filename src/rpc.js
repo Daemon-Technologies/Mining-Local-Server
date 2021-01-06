@@ -21,24 +21,38 @@ function updateMinerToml(data){
     }
 
     if (Verbose) console.log(data)
+    // update node
     if (seed != undefined){
         if (Verbose) console.log("in")
         strFile = replaceSegment("seed", `\"${seed}\"`, strFile)
     }
-        
-    if (Verbose) console.log(strFile)
-    if (burn_fee_cap != undefined)
+    
+    // update burnchain
+    
+    if (burn_fee_cap !== undefined)
         strFile = replaceSegment("burn_fee_cap", burn_fee_cap, strFile)
+        
+    if (burnchainInfo.password && burnchainInfo.peerHost && burnchainInfo.peerPort&&
+        burnchainInfo.rpcPort && burnchainInfo.username ){
+        //console.log(`\"${burnchainInfo.password}\"`)
+        strFile = replaceSegment("password", `\"${burnchainInfo.password}\"`, strFile)
+        //console.log("after password:", strFile)
+        strFile = replaceSegment("peer_host", `\"${burnchainInfo.peerHost}\"`, strFile)
+        //console.log("after peerHost:", strFile)
+        strFile = replaceSegment("peer_port", `\"${burnchainInfo.peerPort}\"`, strFile)
+        strFile = replaceSegment("rpc_port", `\"${burnchainInfo.rpcPort}\"`, strFile)
+        strFile = replaceSegment("username", `\"${burnchainInfo.username}\"`, strFile)
+    }
 
     switch (network) {
-        case "Krypton" | "krypton": fs.writeFileSync("./conf/miner-Krypton.toml", strFile , 'utf-8')
+        case "Krypton": fs.writeFileSync("./conf/miner-Krypton.toml", strFile , 'utf-8')
                         break;
-        case "Xenon" | "xenon": fs.writeFileSync("./conf/miner-Xenon.toml", strFile , 'utf-8')
+        case "Xenon": fs.writeFileSync("./conf/miner-Xenon.toml", strFile , 'utf-8')
                       break;
         default: fs.writeFileSync("./conf/miner-Krypton.toml", strFile , 'utf-8')
                  break;
     }
-    
+    if (Verbose) console.log("final toml is :", strFile)
 }
 
 
@@ -54,7 +68,7 @@ function updateMinerToml(data){
 
 export async function getNodeStatus(network){
     console.log(network)
-    const Verbose = true
+    const Verbose = false
     //Check node exists
     let exists = await checkStacksNodeExists(network)
     if (!exists) {
@@ -95,7 +109,7 @@ export async function shutDownNode(network){
     const Verbose = false
     const {status, PID} = await getNodeStatus(network)
     if (Verbose) console.log(status, PID)
-    if (!status) return { status: 404, data: "No Mining Program is Running Now!" }
+    if (PID <= 0) return { status: 404, data: "No Mining Program is Running Now!" }
     const { stdout, stderr } = child_process.exec(`kill -9 ${PID}`, { shell: true });
 
     return { status: 200, data: `kill PID ${PID}` }
@@ -179,15 +193,16 @@ export async function startNode(data, seed){
     //console.log(rpcResult)
     
     // Start Node
+    let bin = `./stacks-node_${network}`
     try {
         switch (network) {
-            case "Krypton": fs.chmodSync("./stacks-node-krypton",'0777')
-                            execa('./stacks-node', ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
+            case "Krypton": fs.chmodSync(bin,'0777')
+                            execa(bin, ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
                             break;
-            case "Xenon":   fs.chmodSync("./stacks-node-krypton",'0777')
-                            execa('./stacks-node', ['start', '--config=./conf/miner-Xenon.toml']).stderr.pipe(process.stdout); 
+            case "Xenon":   fs.chmodSync(bin,'0777')
+                            execa(bin, ['start', '--config=./conf/miner-Xenon.toml']).stderr.pipe(process.stdout); 
                             break;
-            default: execa('./stacks-node', ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
+            default: execa(bin, ['start', '--config=./conf/miner-Xenon.toml']).stderr.pipe(process.stdout); 
                     break;
         }
     } catch(error){
