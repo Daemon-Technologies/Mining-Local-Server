@@ -1,86 +1,37 @@
 import express from "express"
 import bodyParser from "body-parser"
-import { getNodeStatus, shutDownNode, startNode } from "./src/nodeCommand.js"
-
+import { getNodeStatus, shutDownNode, startNode } from "./src/rpc.js"
+import { createWebsocketChannel } from './src/websocket.js'
 import { createServer } from "http";
-import { Server } from "socket.io";
+import { aes256Decrypt, keyGen } from './utils/key.js'
+
 
 const app = express()
 const clientApp = express()
 const port = 5000
-
 let httpServer = createServer(app) 
-const io = new Server(httpServer, {})
 
-
-import fs from "fs"
-import request from "request"
-import {checkStacksNodeExists} from './utils/stacksNode.js'
-import {selectSystem} from './utils/utils.js'
-
-io.on('connection', (socket) => {
-    socket.on("download", async (msg ,b) => {
-        console.log(msg, b)
-        let exists = await checkStacksNodeExists()
-        console.log(exists)
-        if (exists) {
-            return;
-        }
-        let system = selectSystem()
-        let file_url = 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/1.0.0/stacks-node-'
-        switch (system){
-            case "darwin": file_url+="mac"
-                           break;
-            case "linux":  file_url+=system
-                           break;
-            case "default": return "Do not support other system except Darwin and linux";
-        }
-        let out = fs.createWriteStream('stacks-node')
-        
-        let req = request({
-            method: 'GET',
-            uri: file_url
-        })
-        let cur = 0;
-        let total = 0;
-        let percent = 0;
-        let lastPercent = 0;
-        req.pipe(out);
-
-        req.on('data', function (chunk) {
-            cur += chunk.length
-            if (total != 0){
-                percent = cur/total
-            }
-            if (percent - lastPercent > 0.01){
-                lastPercent = percent
-                io.emit("download_info", lastPercent)
-            }    
-        });
-
-        req.on('end', function() {
-            //console.log("say something")
-            io.emit("download_info", lastPercent)
-            io.emit("download_complete", 1)
-            percent = 1
-        });
-        
-        req.on( 'response', function (data) {
-            total = data.headers[ 'content-length' ];
-            console.log("response:", data.headers[ 'content-length' ] );
-        });
-
-        req.on('error', function (err){
-            console.log(err)
-        })
-    });
-    console.log("user connected");
-})
-
+//console.log(process.argv)
+let password = "12345678" //default password
+password = `${process.argv[3] || process.argv[2]}`
+//console.log(password)
+//console.log(keyGen(password))
 
 app.use(bodyParser.json());
 
 app.all("*", function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", req.headers.origin || '*');
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+    res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Credentials", true);
+    if (req.method == 'OPTIONS') {
+      res.sendStatus(200);
+    } else {
+      next();
+    }
+})
+
+clientApp.all("*", function (req, res, next) {
     res.header("Access-Control-Allow-Origin", req.headers.origin || '*');
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
     res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
@@ -98,29 +49,69 @@ app.get('/', (req, res) => {
 })
 
 app.post('/startMining', async (req, res)=>{
-    if (req.body.seed != undefined){
-        //console.log(req.body)
-        let t = await startNode(req.body)
+    let body = req.body;
+    let r = await aes256Decrypt(req.body.seed.seedEnc, keyGen(password), req.body.seed.iv, req.body.seed.authTag)
+    console.log("response:", r)
+    /*
+    {
+      address: 'mhQcXvMokx2HRb4zKhe8qDR5SQEft48VMX',
+      burn_fee_cap: 20000,
+      debugMode: true,
+      network: 'Krypton',
+      burnchainInfo: {
+        password: 'blockstacksystem',
+        peerHost: 'bitcoind.xenon.blockstack.org',
+        peerPort: 18333,
+        rpcPort: 18332,
+        username: 'blockstack'
+      },
+      seed: {
+        authTag: 'ec1863a1513c736d1e7c3adceebebd46',
+        iv: 'c54bd149288ea99193b303a75c8dbb53',
+        seedEnc: 'DYhFz1/+VijXFSAqFD7SNaLYO/oWgvqzRtH/wQW1zr3F29cmFGactu5Q2iMJbNQNt6I+SGuafHcb2hh+QsXyTewK'
+      }
+    }
+    */
+    if (r && body.address && body.burn_fee_cap && body.debugMode!== undefined 
+          && body.network && body.burnchainInfo)
+    {
+        let t = await startNode(body, r)
         console.log("res:", t)
         res.send(t)
     }
     else{
         res.send({status: 500, data: "param error"})
-    }   
+    }
 })
 
-app.get('/stopMining', async (req, res)=>{
-    let t = await shutDownNode();
+app.post('/stopMining', async (req, res)=>{
+    let body = req.body;
+    let t = await shutDownNode(body.network);
     console.log(t)
     res.send(t)
 })
 
-app.get('/getNodeStatus',  async (req, res)=> {
-    let t = await getNodeStatus()
+app.post('/getNodeStatus',  async (req, res)=> {
+    let body = req.body;
+    let t = await getNodeStatus(body.network)
     console.log(t)
     res.send(t)
 })
 
+app.post('/isValidAuthCode', async(req, res)=> {
+  /*
+  {
+    authTag: 'ec1863a1513c736d1e7c3adceebebd46',
+    iv: 'c54bd149288ea99193b303a75c8dbb53',
+    pingEnc: 'DYhFz1/+VijXFSAqFD7SNaLYO/oWgvqzRtH/wQW1zr3F29cmFGactu5Q2iMJbNQNt6I+SGuafHcb2hh+QsXyTewK'
+  }
+  */
+  let body = req.body;
+  let r = await aes256Decrypt(body.pingEnc, keyGen(password), body.iv, body.authTag)
+  console.log("response:", r)
+  if (r === 'ping') res.send({status: 200 , msg: "pong"})
+  else res.send({status: 500})  
+})
 
 httpServer.listen(port, () => {
     console.log(`Local Server listening at http://localhost:${port}`)
@@ -134,3 +125,5 @@ clientApp.use(express.static('dist'));
 clientApp.get('/*', function (req, res) {
   res.sendFile('dist/index.html', { root: '.' });
 });
+
+createWebsocketChannel(httpServer)
