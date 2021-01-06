@@ -39,8 +39,8 @@ function updateMinerToml(data){
         //console.log("after password:", strFile)
         strFile = replaceSegment("peer_host", `\"${burnchainInfo.peerHost}\"`, strFile)
         //console.log("after peerHost:", strFile)
-        strFile = replaceSegment("peer_port", `\"${burnchainInfo.peerPort}\"`, strFile)
-        strFile = replaceSegment("rpc_port", `\"${burnchainInfo.rpcPort}\"`, strFile)
+        strFile = replaceSegment("peer_port", `${burnchainInfo.peerPort}`, strFile)
+        strFile = replaceSegment("rpc_port", `${burnchainInfo.rpcPort}`, strFile)
         strFile = replaceSegment("username", `\"${burnchainInfo.username}\"`, strFile)
     }
 
@@ -193,17 +193,24 @@ export async function startNode(data, seed){
     //console.log(rpcResult)
     
     // Start Node
-    let bin = `./stacks-node_${network}`
+    let bin = `stacks-node_${network}`
     try {
         switch (network) {
             case "Krypton": fs.chmodSync(bin,'0777')
-                            execa(bin, ['start', '--config=./conf/miner-Krypton.toml']).stderr.pipe(process.stdout); 
+                            if (debugMode)
+                                execa.command(`RUST_BACKTRACE=full BLOCKSTACK_DEBUG=1 ./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log `, { shell: true }).stdout.pipe(process.stdout);
+                            else
+                                execa.command(`./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log`, { shell: true }).stdout.pipe(process.stdout);
                             break;
             case "Xenon":   fs.chmodSync(bin,'0777')
-                            execa(bin, ['start', '--config=./conf/miner-Xenon.toml']).stderr.pipe(process.stdout); 
+                            console.log("in")
+                            if (debugMode)
+                                execa.command(`RUST_BACKTRACE=full BLOCKSTACK_DEBUG=1 ./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log `, { shell: true }).stdout.pipe(process.stdout);
+                            else
+                                execa.command(`./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log`, { shell: true }).stdout.pipe(process.stdout);
                             break;
-            default: execa(bin, ['start', '--config=./conf/miner-Xenon.toml']).stderr.pipe(process.stdout); 
-                    break;
+            default:        execa.command(`./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log`, { shell: true }).stdout.pipe(process.stdout);
+                            break;
         }
     } catch(error){
         console.log(error)
