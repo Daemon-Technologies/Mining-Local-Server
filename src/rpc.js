@@ -108,11 +108,19 @@ export async function getNodeStatus(network){
 export async function shutDownNode(network){
     const Verbose = false
     const {status, PID} = await getNodeStatus(network)
-    if (Verbose) console.log(status, PID)
+    let currentPID = PID
     if (PID <= 0) return { status: 404, data: "No Mining Program is Running Now!" }
-    const { stdout, stderr } = child_process.exec(`kill -9 ${PID}`, { shell: true });
+    while (currentPID > 0){
+        if (Verbose) console.log(status, PID)
+        const { stdout, stderr } = child_process.exec(`kill -9 ${currentPID}`, { shell: true });
+        const {status, PID} = await getNodeStatus(network)
+        currentPID = PID
+    }
+    
 
-    return { status: 200, data: `kill PID ${PID}` }
+
+
+    return { status: 200, data: `kill mining node successfully` }
 }
 
 export async function isValidAuthCode(data){
