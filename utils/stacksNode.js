@@ -1,6 +1,8 @@
 import fs from "fs"
 import crypto from 'crypto'
 import { selectSystem, selectArc } from './utils.js'
+import constants from './constants.js'
+
 export function checkStacksNodeExists(network){
     return new Promise(function(resolve){
         try{
@@ -9,7 +11,7 @@ export function checkStacksNodeExists(network){
             resolve(true)
         }
         catch(error){  
-            console.log("no stacks-node found")
+            console.log(`./stacks-node_${network} not found`)
             resolve(false)
         }
     })
@@ -18,44 +20,56 @@ export function checkStacksNodeExists(network){
 
 export function getStacksNodeMD5(network){
     return new Promise(function(resolve){
-        if (!checkStacksNodeExists()) resolve(false);
+        if (!checkStacksNodeExists(network)) resolve(false);
         let rs = fs.createReadStream(`./stacks-node_${network}`);
         
         let hash = crypto.createHash('md5');
         rs.on('data', hash.update.bind(hash));
-            rs.on('end', function () {
-                let result = hash.digest('hex')
-                //console.log("in here:", result);
-                resolve(result);
-            });   
-        });
+        rs.on('end', function () {
+            let result = hash.digest('hex')
+            //console.log("in here:", result);
+            resolve(result);
+        });   
+    });
 }
 
-const darwin_md5_Krypton = "c93d51447dfd5a1c737dc1717117b933"
-const linux_x64_md5_Krypton = "5557c6ebdfded15e3caef6e3dc7d4643"
-const linux_armv7_md5_Krypton = "5557c6ebdfded15e3caef6e3dc7d4643"
-const darwin_md5_Xenon = "c93d51447dfd5a1c737dc1717117b933"
-const linux_x64_md5_Xenon = "5557c6ebdfded15e3caef6e3dc7d4643"
-const linux_armv7_md5_Xenon = "5557c6ebdfded15e3caef6e3dc7d4643"
 
 
 export async function checkStacksNodeMD5(network){
-    //TODO 2021.1.5 network 切换
-    let md5Result = await getStacksNodeMD5(network)
-    //console.log("md5Result:",md5Result)
-    let system = selectSystem()
-    let arc = selectArc()
-
-    switch (system){
-        case 'darwin': if (md5Result != darwin_md5_krypton) 
-                            return false;
-                       break;
-        case 'linux': if (md5Result != linux_x64_md5_krypton) 
-                            return false;
-                      break;
-        default : return false;
+    let md5Result = await getStacksNodeMD5(network);
+    let md5Standard = constants.stacksNodeKryptonDarwin_MD5;
+    let result = false;  
+    let system = selectSystem();
+    let arc = selectArc();
+    switch (`${network}_${system}`){
+        case "Krypton_darwin" : md5Standard = constants.stacksNodeKryptonDarwin_MD5;
+                                break;
+        case "Krypton_linux" :  switch (arc){
+                                    case "x64" : md5Standard = constants.stacksNodeKryptonLinux_x64_MD5;
+                                                 break;
+                                    case "arm" : md5Standard = constants.stacksNodeKryptonLinux_arm64_MD5; 
+                                                 break;
+                                    case "arm64" : md5Standard = constants.stacksNodeKryptonLinux_arm64_MD5; 
+                                                 break;
+                                    default : console.log("no such arc:", arc); break;
+                                }
+                                break;
+        case "Xenon_darwin" :   md5Standard = constants.stacksNodeXenonDarwin_MD5;
+                                break;
+        case "Xenon_linux":     switch (arc){
+                                    case "x64" :  md5Standard = constants.stacksNodeXenonLinux_x64_MD5;
+                                                  break;
+                                    case "arm" : md5Standard = constants.stacksNodeXenonLinux_arm64_MD5; 
+                                                  break;
+                                    case "arm64" : md5Standard = constants.stacksNodeXenonLinux_arm64_MD5;
+                                                   break;
+                                    default : console.log("no such arc:", arc); break;
+                                }
+                                break;
+        default: console.log("no such system:", `${network}_${system}`); break;
     }
-    return true;
+    result = md5Result === md5Standard? true: false;
+    return result;
 }
 
 export function deleteStacksNode(network){
@@ -64,11 +78,9 @@ export function deleteStacksNode(network){
             fs.unlinkSync(`./stacks-node_${network}`)
             //file removed
             resolve(true)
-            //return { status : 401, data : "Stacks-node doesn't complete, please re-download it"}
         } catch(err) {
             console.error(err)
             resolve(false)
-            //return { status : 402, data : "Stacks-node doesn't complete, but there is some issue when deleting it. Please delete manually, it is in the folder of Mining-Local-Server."}
         } 
     })
 }
@@ -107,25 +119,52 @@ export async function isNodeStart(commands, network){
         if (commands[index].CMD.search(key_word) != -1)
             return {status: true, PID: commands[index].PID, address: address}
     }
-    return {status: 500, PID: -5}
+    return {status: 500, PID: -5, msg: `stacks-node_${network}, but no PID of stacks-node_${network} runs`}
 }
 
-export async function downloadStacksNode(network){
+function selectStacksNodeURL(network){
+    let system = selectSystem()
+    let arc = selectArc()
+    let url = constants.stacksNodeKryptonDarwin;
+    switch (`${network}_${system}`){
+        case "Krypton_darwin" : url = constants.stacksNodeKryptonDarwin;
+                                break;
+        case "Krypton_linux" :  switch (arc){
+                                    case "x64" : url = constants.stacksNodeKryptonLinux_x64;
+                                                 break;
+                                    case "arm" : url = constants.stacksNodeKryptonLinux_arm64; 
+                                                 break;
+                                    case "arm64" : url = constants.stacksNodeKryptonLinux_arm64; 
+                                                 break;
+                                    default : console.log("no such arc:", arc); break;
+                                }
+                                break;
+        case "Xenon_darwin" :   url = constants.stacksNodeXenonDarwin;
+                                break;
+        case "Xenon_linux":     switch (arc){
+                                    case "x64" :  url = constants.stacksNodeXenonLinux_x64;
+                                                  break;
+                                    case "arm" : url = constants.stacksNodeXenonLinux_arm64; 
+                                                  break;
+                                    case "arm64" : url = constants.stacksNodeXenonLinux_arm64
+                                                   break;
+                                    default : console.log("no such arc:", arc); break;
+                                }
+                                break;
+        default: console.log("no such system:", `${network}_${system}`); break;
+    }
+    return url
+}
+
+export async function downloadStacksNode(network, io){
     let exists = await checkStacksNodeExists()
     console.log(exists)
     if (exists) {
         return;
     }
-    let system = selectSystem()
-    let file_url = 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/1.0.0/stacks-node-'
-    switch (system){
-        case "darwin": file_url+="mac"
-                    break;
-        case "linux":  file_url+=system
-                    break;
-        case "default": return "Do not support other system except Darwin and linux";
-    }
-    let out = fs.createWriteStream('stacks-node')
+    
+    let file_url = selectStacksNodeURL(network)
+    let out = fs.createWriteStream(`stacks-node_${network}`)
     
     let req = request({
         method: 'GET',

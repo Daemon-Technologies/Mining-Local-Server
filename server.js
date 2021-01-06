@@ -11,10 +11,10 @@ const clientApp = express()
 const port = 5000
 let httpServer = createServer(app) 
 
-console.log(process.argv)
+//console.log(process.argv)
 const password = `${process.argv[3] || process.argv[2]}`
-console.log(password)
-console.log(keyGen(password))
+//console.log(password)
+//console.log(keyGen(password))
 
 app.use(bodyParser.json());
 
@@ -71,35 +71,46 @@ app.post('/startMining', async (req, res)=>{
       }
     }
     */
-    console.log(body)
     if (r && body.address && body.burn_fee_cap && body.debugMode!== undefined 
           && body.network && body.burnchainInfo)
     {
-        console.log("in")
-        console.log(req.body)
         let r = await startNode(body, r)
         console.log("res:", r)
         res.send(r)
     }
     else{
         res.send({status: 500, data: "param error"})
-    }   
-
+    }
 })
 
-app.get('/stopMining', async (req, res)=>{
-    let t = await shutDownNode();
+app.post('/stopMining', async (req, res)=>{
+    let body = req.body;
+    let t = await shutDownNode(body.network);
     console.log(t)
     res.send(t)
 })
 
 app.post('/getNodeStatus',  async (req, res)=> {
     let body = req.body;
-    let t = await getNodeStatus(body)
+    let t = await getNodeStatus(body.network)
     console.log(t)
     res.send(t)
 })
 
+app.post('/isValidAuthCode', async(req, res)=> {
+  /*
+  {
+    authTag: 'ec1863a1513c736d1e7c3adceebebd46',
+    iv: 'c54bd149288ea99193b303a75c8dbb53',
+    pingEnc: 'DYhFz1/+VijXFSAqFD7SNaLYO/oWgvqzRtH/wQW1zr3F29cmFGactu5Q2iMJbNQNt6I+SGuafHcb2hh+QsXyTewK'
+  }
+  */
+  let body = req.body;
+  let r = await aes256Decrypt(body.pingEnc, keyGen(password), body.iv, body.authTag)
+  console.log("response:", r)
+  if (r === 'ping') res.send({status: 200 , msg: "pong"})
+  else res.send({status: 500})  
+})
 
 httpServer.listen(port, () => {
     console.log(`Local Server listening at http://localhost:${port}`)

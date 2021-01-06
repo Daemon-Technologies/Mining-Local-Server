@@ -13,7 +13,7 @@ export function createWebsocketChannel(httpServer) {
 
         socket.on("download", async (msg ,b) => {
             console.log(msg, b)
-            downloadStacksNode(msg)
+            downloadStacksNode(msg, io)
         });
         
         console.log("user connected");

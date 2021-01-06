@@ -1,21 +1,20 @@
 import child_process from "child_process"
 import fs from "fs"
 import execa from "execa"
-import request from "request"
 import { selectSystem } from '../utils/utils.js'
 import { checkStacksNodeMD5, getStacksNodeMD5, checkStacksNodeExists, deleteStacksNode, replaceSegment, getMinerAddress, isNodeStart } from '../utils/stacksNode.js'
 import { splitProcess } from '../utils/sysCommand.js'
 
 function updateMinerToml(data){
-    const {seed, burn_fee_cap, network} = data
+    const {seed, burn_fee_cap, network, burnchainInfo} = data
     const Verbose = true;
 
     if (Verbose) console.log(seed, burn_fee_cap, network)
     let strFile;
     switch (network) {
-        case "Krypton" | "krypton" : strFile = fs.readFileSync("./conf/miner-Krypton.toml", 'utf-8');
+        case "Krypton": strFile = fs.readFileSync("./conf/miner-Krypton.toml", 'utf-8');
                         break;
-        case "Xenon" | "xenon" : strFile = fs.readFileSync("./conf/miner-Xenon.toml", 'utf-8');
+        case "Xenon": strFile = fs.readFileSync("./conf/miner-Xenon.toml", 'utf-8');
                       break;
         default: strFile = fs.readFileSync("./conf/miner-Krypton.toml", 'utf-8');
                  break;
@@ -53,16 +52,17 @@ function updateMinerToml(data){
     else PID nodeStatus is running.
 */
 
-export async function getNodeStatus(data){
-    const { network } = data
-    const Verbose = false
+export async function getNodeStatus(network){
+    console.log(network)
+    const Verbose = true
     //Check node exists
     let exists = await checkStacksNodeExists(network)
     if (!exists) {
         console.log("Node doesn't exist!")
-        return {status: 500, PID: -2, msg: "Got Mining-Local-Server, but no stacks-node found"}
+        return {status: 500, PID: -2, msg: `Got Mining-Local-Server, but no stacks-node_${network} found`}
     }
-    console.log("Stacks-node found")
+    console.log(`stacks-node_${network} found`)
+
     //Check node md5
     let md5_status  = await checkStacksNodeMD5(network)
     console.log(md5_status)
@@ -70,17 +70,17 @@ export async function getNodeStatus(data){
         console.log("file md5 is wrong, deleting")
         let deleteResult = await deleteStacksNode(network)
         if (deleteResult){
-            return { status : 500, PID: -3 , msg:"Found stacks-node, but stacks-node is incomplete. Will delete it, delete successfully."}
+            return { status : 500, PID: -3 , msg: `Found stacks-node_${network}, but stacks-node_${network} is incomplete. Will delete it, delete successfully.`}
         }
         else{
-            return { status : 500, PID: -4 , msg:"Found stacks-node, but stacks-node is incomplete. Will delete it, delete unsuccessfully."}
+            return { status : 500, PID: -4 , msg: `Found stacks-node_${network}, but stacks-node_${network} is incomplete. Will delete it, delete unsuccessfully.`}
         }
         
     }
-    console.log("Stacks-node is complete")
+    console.log(`stacks-node_${network} is complete`)
 
     //Get Node Status
-    const { stdout, stderr } = child_process.exec('ps -ax | grep stacks-node', { shell: true });
+    const { stdout, stderr } = child_process.exec(`ps -ax | grep stacks-node_${network}`, { shell: true });
     for await (const data of stdout) {
         if (Verbose) console.log(`stdout: ${stdout}`)
         if (Verbose) console.log(`stdout from the child: \n ${data}`);
@@ -91,36 +91,27 @@ export async function getNodeStatus(data){
     return {status: 500, PID: -5, msg: "Found stacks-node, but no PID of stacks-node runs"}
 }
 
-export async function shutDownNode(){
+export async function shutDownNode(network){
     const Verbose = false
-    const {status, PID} = await getNodeStatus()
+    const {status, PID} = await getNodeStatus(network)
     if (Verbose) console.log(status, PID)
-    if (!status) 
-        return { status: 404, data: "No Mining Program is Running Now!" }
+    if (!status) return { status: 404, data: "No Mining Program is Running Now!" }
     const { stdout, stderr } = child_process.exec(`kill -9 ${PID}`, { shell: true });
-    //console.log("stdout:", stdout)
+
     return { status: 200, data: `kill PID ${PID}` }
 }
 
-function importaddressRPC(address){
-    return new Promise(function(resolve, reject){
-        request.post('http://bitcoind.krypton.blockstack.org:18443', 
-            {json:{"id":"stacks",
-                "jsonrpc":"2.0",
-                "method":"importaddress",
-                "params":[ address, "testing" , false ]}}, function (err, response, body) {
-                    if (err) {
-                        reject(console.error('rpc call failed:', err));
-                    }
-                    console.log( "importaddress rpc call succeed, body is :", body);
-                    console.log("sleep for 15 seconds to import address in bitcoin node")
-                    setTimeout(function(){
-                        resolve(body)
-                    },15000)
-                    
-                })
-    })
+export async function isValidAuthCode(data){
+    /*
+    {
+        authTag: 'ec1863a1513c736d1e7c3adceebebd46',
+        iv: 'c54bd149288ea99193b303a75c8dbb53',
+        pingEnc: 'DYhFz1/+VijXFSAqFD7SNaLYO/oWgvqzRtH/wQW1zr3F29cmFGactu5Q2iMJbNQNt6I+SGuafHcb2hh+QsXyTewK'
+    }
+    */
+
 }
+
 
 export async function startNode(data, seed){
     /*
@@ -138,21 +129,19 @@ export async function startNode(data, seed){
             },
         }
     */
-    //2021.1.3 support debug mode & 
-    // const { seed, burn_fee_cap, network, address, debug } = data
     const { burn_fee_cap, network, address, debugMode, burnchainInfo } = data
     
     const Verbose = true
 
     // Check stacks-node exists
-    if (!checkStacksNodeExists()) 
+    if (!checkStacksNodeExists(network)) 
         return { status : 404, data : "stacks-node doesn't exist, please download it"}
 
     // Check stacks-node md5
-    let md5_status = checkStacksNodeMD5()
+    let md5_status = checkStacksNodeMD5(network)
     
     if (!md5_status){
-        let deleteResult = await deleteStacksNode()
+        let deleteResult = await deleteStacksNode(network)
         if (deleteResult)
             return { status : 401, data : "Stacks-node doesn't complete, please re-download it"}
         else
@@ -162,16 +151,16 @@ export async function startNode(data, seed){
 
 
     // Check node status
-    const {status, PID} = await getNodeStatus()
+    const {status, PID} = await getNodeStatus(network)
     console.log(status, PID)
 
     if (PID > 0)
         return { status: 500, data: "Mining program already exists!" }
     
     // Modify configuration file
-    const {seed, burn_fee_cap, network, address} = data
 
     if (Verbose) console.log(seed, burn_fee_cap, network)
+    data.seed = seed
     updateMinerToml(data)
 
     // Import Bitcoin Address to krypton bitcoin node

@@ -5,8 +5,8 @@ import constants  from './constants.js'
 let aesSalt = 'a5782e4ff88d33106913bd15965d776955e76a1d511359d0f76b89dcbf8ea721fc32f0cf3a3a19c932e44872c141e7d63e8f07aea7da023a38273e6dd1d5b667';
 
 export function kdf(password, salt) {
-    console.log(password, salt)
-    console.log(constants)
+    // console.log(password, salt)
+    // console.log(constants)
     const key = crypto.pbkdf2Sync(password, salt, 10000, constants.aesKeySize, constants.sha256);
     return key;
 }
@@ -35,7 +35,7 @@ export function aes256Encrypt(data, key) {
 }
 */
 export async function aes256Decrypt(data, key, ivStr, authTagStr) {
-    let Verbose = true;
+    let Verbose = false;
     return new Promise((resolve, rejects)=> {
         try {
             const iv = Buffer.from(ivStr, 'hex');
