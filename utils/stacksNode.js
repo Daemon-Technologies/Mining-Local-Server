@@ -2,17 +2,21 @@ import fs from "fs"
 import crypto from 'crypto'
 import { selectSystem, selectArc } from './utils.js'
 import constants from './constants.js'
+import request from 'request'
+
+let downloading = false;
 
 export function checkStacksNodeExists(network){
     return new Promise(function(resolve){
         try{
             let stat = fs.statSync(`./stacks-node_${network}`).isFile()
            // console.log("success:", stat)
-            resolve(true)
+            if (downloading) resolve(2)
+            else resolve(1)
         }
         catch(error){  
             console.log(`./stacks-node_${network} not found`)
-            resolve(false)
+            resolve(0)
         }
     })
 }
@@ -22,7 +26,6 @@ export function getStacksNodeMD5(network){
     return new Promise(function(resolve){
         if (!checkStacksNodeExists(network)) resolve(false);
         let rs = fs.createReadStream(`./stacks-node_${network}`);
-        
         let hash = crypto.createHash('md5');
         rs.on('data', hash.update.bind(hash));
         rs.on('end', function () {
@@ -157,13 +160,14 @@ function selectStacksNodeURL(network){
 }
 
 export async function downloadStacksNode(network, io){
-    let exists = await checkStacksNodeExists()
+    let exists = await checkStacksNodeExists(network)
     console.log(exists)
     if (exists) {
         return;
     }
     
     let file_url = selectStacksNodeURL(network)
+    console.log(file_url)
     let out = fs.createWriteStream(`stacks-node_${network}`)
     
     let req = request({
@@ -178,6 +182,7 @@ export async function downloadStacksNode(network, io){
 
     req.on('data', function (chunk) {
         cur += chunk.length
+        
         if (total != 0){
             percent = cur/total
         }
@@ -185,6 +190,7 @@ export async function downloadStacksNode(network, io){
             lastPercent = percent
             io.emit("download_info", lastPercent)
         }    
+        downloading = true;
     });
 
     req.on('end', function() {
@@ -192,6 +198,7 @@ export async function downloadStacksNode(network, io){
         io.emit("download_info", lastPercent)
         io.emit("download_complete", 1)
         percent = 1
+        downloading = false;
     });
     
     req.on( 'response', function (data) {
