@@ -1,5 +1,5 @@
 import child_process from "child_process"
-import fs from "fs"
+import fs, { readlink } from "fs"
 import execa from "execa"
 import { selectSystem } from '../utils/utils.js'
 import { checkStacksNodeMD5, getStacksNodeMD5, checkStacksNodeExists, deleteStacksNode, replaceSegment, getMinerAddress, isNodeStart } from '../utils/stacksNode.js'
@@ -62,7 +62,7 @@ function updateMinerToml(data){
     -3 Found stacks-node, but stacks-node is incomplete. Will delete it, delete successfully.
     -4 Found stacks-node, but stacks-node is incomplete. Will delete it, delete unsuccessfully, please do it manually.
     -5 Found stacks-node, but no PID of stacks-node runs
-    
+    -6 stacks-node is downloading, please wait.
     else PID nodeStatus is running.
 */
 
@@ -71,10 +71,13 @@ export async function getNodeStatus(network){
     const Verbose = false
     //Check node exists
     let exists = await checkStacksNodeExists(network)
-    if (!exists) {
-        console.log("Node doesn't exist!")
-        return {status: 500, PID: -2, msg: `Got Mining-Local-Server, but no stacks-node_${network} found`}
+        // Check stacks-node exists
+    switch (await checkStacksNodeExists(network)){
+        case 0: console.log("Node doesn't exist!"); return {status: 500, PID: -2, msg: `Got Mining-Local-Server, but no stacks-node_${network} found`} ;
+        case 1: break;
+        case 2: return { status : 200, PID: -6 , data : "stacks-node is downloading, please wait."} ;
     }
+
     console.log(`stacks-node_${network} found`)
 
     //Check node md5
@@ -156,8 +159,12 @@ export async function startNode(data, seed){
     const Verbose = true
 
     // Check stacks-node exists
-    if (!checkStacksNodeExists(network)) 
-        return { status : 404, data : "stacks-node doesn't exist, please download it"}
+    switch (await checkStacksNodeExists(network)){
+        case 0: return { status : 404, data : "stacks-node doesn't exist, please download it"} ;
+        case 1: break;
+        case 2: return { status : 406, data : "stacks-node is downloading, please wait."} ;
+    }
+        
 
     // Check stacks-node md5
     let md5_status = checkStacksNodeMD5(network)
