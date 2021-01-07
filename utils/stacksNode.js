@@ -82,14 +82,14 @@ export function deleteStacksNode(network){
             //file removed
             resolve(true)
         } catch(err) {
-            console.error(err)
+            console.error("delete error:",err)
             resolve(false)
         } 
     })
 }
 
 export function replaceSegment(keyword, value ,strFile){
-    const Verbose = true;
+    const Verbose = false;
     let start = strFile.search(keyword)
     let end = start
     while (end <= strFile.length){

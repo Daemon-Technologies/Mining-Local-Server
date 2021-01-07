@@ -8,15 +8,17 @@ import { aes256Decrypt, keyGen } from './utils/key.js'
 
 const app = express()
 const clientApp = express()
-const port = 5000
+const port_localServer = 5000
+const port_client = 8000
 let httpServer = createServer(app) 
 
 //console.log(process.argv)
-let password = "12345678" //default password
+let password;// = "12345678" //default password
 password = `${process.argv[3] || process.argv[2]}`
-//console.log(password)
-//console.log(keyGen(password))
-
+//password = undefined
+//console.log(password, "undefined",typeof("undefined"), "undefined".length, typeof(password), typeof(password) == "undefined")
+if (password == "undefined") password = "12345678"
+console.log(password)
 app.use(bodyParser.json());
 
 app.all("*", function (req, res, next) {
@@ -50,8 +52,10 @@ app.get('/', (req, res) => {
 
 app.post('/startMining', async (req, res)=>{
     let body = req.body;
-    let r = await aes256Decrypt(req.body.seed.seedEnc, keyGen(password), req.body.seed.iv, req.body.seed.authTag)
-    console.log("response:", r)
+    let rseed = await aes256Decrypt(body.seed.seedEnc, keyGen(password), body.seed.iv, body.seed.authTag)
+    let rburnchain = await aes256Decrypt(body.burnchainInfo.infoEnc, keyGen(password), body.burnchainInfo.iv, body.burnchainInfo.authTag)
+    
+    //console.log("response:", rseed, rburnchain)
     /*
     {
       address: 'mhQcXvMokx2HRb4zKhe8qDR5SQEft48VMX',
@@ -72,10 +76,10 @@ app.post('/startMining', async (req, res)=>{
       }
     }
     */
-    if (r && body.address && body.burn_fee_cap && body.debugMode!== undefined 
-          && body.network && body.burnchainInfo)
-    {
-        let t = await startNode(body, r)
+    
+    if (rseed && rburnchain && body.address && body.burn_fee_cap && body.debugMode!== undefined 
+          && body.network && body.burnchainInfo){
+        let t = await startNode(body, rseed, JSON.parse(rburnchain))
         console.log("res:", t)
         res.send(t)
     }
@@ -113,12 +117,12 @@ app.post('/isValidAuthCode', async(req, res)=> {
   else res.send({status: 500})  
 })
 
-httpServer.listen(port, () => {
-    console.log(`Local Server listening at http://localhost:${port}`)
+httpServer.listen(port_localServer, () => {
+    console.log(`Local Server listening at http://localhost:${port_localServer}`)
 })
 
-clientApp.listen(8000, () => {
-    console.log(`Mining-Bot Client listening at http://localhost:8000`)
+clientApp.listen(port_client, () => {
+    console.log(`Mining-Bot Client listening at http://localhost:${port_client}`)
 })
 clientApp.use(express.static('dist'));
 
