@@ -15,7 +15,7 @@ export function keyGen(password) {
     if (!password) {
       throw Error("No Password");
     }
-    console.log(aesSalt.toString('hex'));
+    //console.log(aesSalt.toString('hex'));
     const key = kdf(password, aesSalt.toString('hex'));
     return key;
 }

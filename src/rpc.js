@@ -7,7 +7,7 @@ import { splitProcess } from '../utils/sysCommand.js'
 
 function updateMinerToml(data){
     const {seed, burn_fee_cap, network, burnchainInfo} = data
-    const Verbose = true;
+    const Verbose = false;
 
     if (Verbose) console.log(seed, burn_fee_cap, network)
     let strFile;
@@ -138,7 +138,7 @@ export async function isValidAuthCode(data){
 }
 
 
-export async function startNode(data, seed){
+export async function startNode(data, seed, burnchainInfo){
     /*
         {
             address: 'mhQcXvMokx2HRb4zKhe8qDR5SQEft48VMX',
@@ -154,7 +154,7 @@ export async function startNode(data, seed){
             },
         }
     */
-    const { burn_fee_cap, network, address, debugMode, burnchainInfo } = data
+    const { burn_fee_cap, network, address, debugMode } = data
     
     const Verbose = true
 
@@ -190,6 +190,7 @@ export async function startNode(data, seed){
 
     if (Verbose) console.log(seed, burn_fee_cap, network)
     data.seed = seed
+    data.burnchainInfo = burnchainInfo
     updateMinerToml(data)
 
     // Import Bitcoin Address to krypton bitcoin node
@@ -221,10 +222,12 @@ export async function startNode(data, seed){
                             console.log("in")
                             if (debugMode)
                                 execa.command(`RUST_BACKTRACE=full BLOCKSTACK_DEBUG=1 ./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log `, { shell: true }).stdout.pipe(process.stdout);
-                            else
+                            else{
                                 execa.command(`./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log`, { shell: true }).stdout.pipe(process.stdout);
+                            }
                             break;
             default:        execa.command(`./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log`, { shell: true }).stdout.pipe(process.stdout);
+
                             break;
         }
     } catch(error){
@@ -236,3 +239,4 @@ export async function startNode(data, seed){
 
     return { status: 200, data: "Mining Program has been Launched! You can check the LOG info of stacks-node." }
 }
+
