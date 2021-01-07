@@ -123,6 +123,7 @@ httpServer.listen(port_localServer, () => {
 
 clientApp.listen(port_client, () => {
     console.log(`Mining-Bot Client listening at http://localhost:${port_client}`)
+    console.log(`IF YOU USE REMOTE SERVER, PLEASE VISIT http://<YOUR_SERVER_IP>:${port_client}`)
 })
 clientApp.use(express.static('dist'));
 
