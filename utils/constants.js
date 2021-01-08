@@ -18,13 +18,15 @@ const constants = {
 
     // Mining-Bot Release MD5
     //Release v24.0.0.0-xenon
+    //https://github.com/blockstack/stacks-blockchain/releases/tag/v24.0.0.0-xenon
     stacksNodeKryptonDarwin_MD5: 'c93d51447dfd5a1c737dc1717117b933',
     stacksNodeKryptonLinux_x64_MD5: '5557c6ebdfded15e3caef6e3dc7d4643',
     stacksNodeKryptonLinux_arm64_MD5: '098bbc9d5f95bba62d81c97f50c3f477',
-    //Release v24.3.2.0-xenon
-    stacksNodeXenonDarwin_MD5: '5189369ee753c170c07dd2391b45f5ba',
-    stacksNodeXenonLinux_x64_MD5: '5b9fd693710de9704bec65ff2146a960',
-    stacksNodeXenonLinux_arm64_MD5: 'ad81a52c0070644158c542d537201391'
+    //Release 2.0.0-rc1
+    //https://github.com/blockstack/stacks-blockchain/releases/tag/2.0.0-rc1
+    stacksNodeXenonDarwin_MD5: '437b7121298e9a299ddf0f3535d41533',
+    stacksNodeXenonLinux_x64_MD5: '750489f0ee76791cfa169cc6dbb97b88',
+    stacksNodeXenonLinux_arm64_MD5: 'c8741e2024a0daf6274dd510ad1bb0e9'
     
     //  stacks-node-darwin
     //  stacks-node-linux_x64
