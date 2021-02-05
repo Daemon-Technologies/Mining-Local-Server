@@ -103,18 +103,18 @@ app.post('/getNodeStatus',  async (req, res)=> {
 })
 
 app.post('/isValidAuthCode', async(req, res)=> {
-  /*
-  {
-    authTag: 'ec1863a1513c736d1e7c3adceebebd46',
-    iv: 'c54bd149288ea99193b303a75c8dbb53',
-    pingEnc: 'DYhFz1/+VijXFSAqFD7SNaLYO/oWgvqzRtH/wQW1zr3F29cmFGactu5Q2iMJbNQNt6I+SGuafHcb2hh+QsXyTewK'
-  }
-  */
-  let body = req.body;
-  let r = await aes256Decrypt(body.pingEnc, keyGen(password), body.iv, body.authTag)
-  console.log("response:", r)
-  if (r === 'ping') res.send({status: 200 , msg: "pong"})
-  else res.send({status: 500})  
+    /*
+    {
+      authTag: 'ec1863a1513c736d1e7c3adceebebd46',
+      iv: 'c54bd149288ea99193b303a75c8dbb53',
+      pingEnc: 'DYhFz1/+VijXFSAqFD7SNaLYO/oWgvqzRtH/wQW1zr3F29cmFGactu5Q2iMJbNQNt6I+SGuafHcb2hh+QsXyTewK'
+    }
+    */
+    let body = req.body;
+    let r = await aes256Decrypt(body.pingEnc, keyGen(password), body.iv, body.authTag)
+    console.log("response:", r)
+    if (r === 'ping') res.send({status: 200 , msg: "pong"})
+    else res.send({status: 500}) 
 })
 
 httpServer.listen(port_localServer, () => {

@@ -16,7 +16,9 @@ function updateMinerToml(data){
                         break;
         case "Xenon": strFile = fs.readFileSync("./conf/miner-Xenon.toml", 'utf-8');
                       break;
-        default: strFile = fs.readFileSync("./conf/miner-Krypton.toml", 'utf-8');
+        case "Mainnet": strFile = fs.readFileSync("./conf/miner-Mainnet.toml", 'utf-8');
+                      break;
+        default: strFile = fs.readFileSync("./conf/miner-Xenon.toml", 'utf-8');
                  break;
     }
 
@@ -25,6 +27,7 @@ function updateMinerToml(data){
     if (seed != undefined){
         if (Verbose) console.log("in")
         strFile = replaceSegment("seed", `\"${seed}\"`, strFile)
+        strFile = replaceSegment("local_peer_seed", `\"${seed}\"`, strFile)
     }
     
     // update burnchain
@@ -48,6 +51,8 @@ function updateMinerToml(data){
         case "Krypton": fs.writeFileSync("./conf/miner-Krypton.toml", strFile , 'utf-8')
                         break;
         case "Xenon": fs.writeFileSync("./conf/miner-Xenon.toml", strFile , 'utf-8')
+                      break;
+        case "Mainnet": fs.writeFileSync("./conf/miner-Mainnet.toml", strFile , 'utf-8')
                       break;
         default: fs.writeFileSync("./conf/miner-Krypton.toml", strFile , 'utf-8')
                  break;
@@ -143,6 +148,7 @@ export async function startNode(data, seed, burnchainInfo){
         {
             address: 'mhQcXvMokx2HRb4zKhe8qDR5SQEft48VMX',
             burn_fee_cap: 20000,
+            sats_per_bytes: 50,
             debugMode: true,
             network: 'Krypton',
             burnchainInfo:{
@@ -154,14 +160,14 @@ export async function startNode(data, seed, burnchainInfo){
             },
         }
     */
-    const { burn_fee_cap, network, address, debugMode } = data
+    const { burn_fee_cap, network, address, debugMode, sats_per_bytes } = data
     
     const Verbose = true
 
     // Check stacks-node exists
     switch (await checkStacksNodeExists(network)){
         case 0: return { status : 404, data : "stacks-node doesn't exist, please download it"} ;
-        case 1: break;
+        case 1: break;  //Normal situation, go on.
         case 2: return { status : 406, data : "stacks-node is downloading, please wait."} ;
     }
         
@@ -214,18 +220,26 @@ export async function startNode(data, seed, burnchainInfo){
         switch (network) {
             case "Krypton": fs.chmodSync(bin,'0777')
                             if (debugMode)
-                                execa.command(`RUST_BACKTRACE=full BLOCKSTACK_DEBUG=1 ./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log `, { shell: true }).stdout.pipe(process.stdout);
+                                execa.command(`RUST_BACKTRACE=full STACKS_LOG_DEBUG=1 ./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log `, { shell: true }).stdout.pipe(process.stdout);
                             else
                                 execa.command(`./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log`, { shell: true }).stdout.pipe(process.stdout);
                             break;
             case "Xenon":   fs.chmodSync(bin,'0777')
                             console.log("in")
                             if (debugMode)
-                                execa.command(`RUST_BACKTRACE=full BLOCKSTACK_DEBUG=1 ./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log `, { shell: true }).stdout.pipe(process.stdout);
+                                execa.command(`RUST_BACKTRACE=full STACKS_LOG_DEBUG=1 ./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log `, { shell: true }).stdout.pipe(process.stdout);
                             else{
                                 execa.command(`./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log`, { shell: true }).stdout.pipe(process.stdout);
                             }
                             break;
+            case "Mainnet": fs.chmodSync(bin,'0777')
+                            if (debugMode)
+                                execa.command(`RUST_BACKTRACE=full STACKS_LOG_DEBUG=1 ./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log `, { shell: true }).stdout.pipe(process.stdout);
+                            else{
+                                execa.command(`./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log`, { shell: true }).stdout.pipe(process.stdout);
+                            }
+                            break;
+
             default:        execa.command(`./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log`, { shell: true }).stdout.pipe(process.stdout);
 
                             break;

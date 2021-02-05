@@ -69,6 +69,18 @@ export async function checkStacksNodeMD5(network){
                                     default : console.log("no such arc:", arc); break;
                                 }
                                 break;
+        case "Mainnet_darwin" :   md5Standard = constants.stacksNodeMainnetDarwin_MD5;
+                                break;
+        case "Mainnet_linux":     switch (arc){
+                                    case "x64" :  md5Standard = constants.stacksNodeMainnetLinux_x64_MD5;
+                                                  break;
+                                    case "arm" : md5Standard = constants.stacksNodeMainnetLinux_arm64_MD5; 
+                                                  break;
+                                    case "arm64" : md5Standard = constants.stacksNodeMainnetLinux_arm64_MD5;
+                                                   break;
+                                    default : console.log("no such arc:", arc); break;
+                                }
+                                break;
         default: console.log("no such system:", `${network}_${system}`); break;
     }
     result = md5Result === md5Standard? true: false;
@@ -92,6 +104,10 @@ export function replaceSegment(keyword, value ,strFile){
     const Verbose = false;
     let start = strFile.search(keyword)
     let end = start
+
+    // not found keyword, return native strFile
+    if (start == -1) return strFile
+
     while (end <= strFile.length){
         if (strFile.charAt(end) == '\n')
             break;
@@ -150,6 +166,18 @@ function selectStacksNodeURL(network){
                                     case "arm" : url = constants.stacksNodeXenonLinux_arm64; 
                                                   break;
                                     case "arm64" : url = constants.stacksNodeXenonLinux_arm64
+                                                   break;
+                                    default : console.log("no such arc:", arc); break;
+                                }
+                                break;
+        case "Mainnet_darwin" :   url = constants.stacksNodeMainnetDarwin;
+                                break;
+        case "Mainnet_linux":     switch (arc){
+                                    case "x64" :  url = constants.stacksNodeMainnetLinux_x64;
+                                                  break;
+                                    case "arm" : url = constants.stacksNodeMainnetLinux_arm64; 
+                                                  break;
+                                    case "arm64" : url = constants.stacksNodeMainnetLinux_arm64
                                                    break;
                                     default : console.log("no such arc:", arc); break;
                                 }
