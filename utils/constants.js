@@ -12,12 +12,14 @@ const constants = {
     stacksNodeKryptonDarwin: 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/1.0.0/stacks-node-mac',
     stacksNodeKryptonLinux_x64: 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/1.0.0/stacks-node-linux-x64',
     stacksNodeKryptonLinux_arm64: 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/1.0.0/stacks-node-linux-arm64',
+
     stacksNodeXenonDarwin: 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.0.0/stacks-node-mac',
     stacksNodeXenonLinux_x64: 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.0.0/stacks-node-linux-x64',
     stacksNodeXenonLinux_arm64: 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.0.0/stacks-node-linux-arm64',
-    stacksNodeMainnetDarwin:'',
-    stacksNodeMainnetLinux_x64:'',
-    stacksNodeMainnetLinux_arm64:'',
+    
+    stacksNodeMainnetDarwin:'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.1.0/stacks-node-mac',
+    stacksNodeMainnetLinux_x64:'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.1.0/stacks-node-linux-x64',
+    stacksNodeMainnetLinux_arm64:'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.1.0/stacks-node-linux-arm64',
     // Mining-Bot Release MD5
     //Release v24.0.0.0-xenon
     //https://github.com/blockstack/stacks-blockchain/releases/tag/v24.0.0.0-xenon
@@ -31,11 +33,11 @@ const constants = {
     stacksNodeXenonLinux_x64_MD5: '750489f0ee76791cfa169cc6dbb97b88',
     stacksNodeXenonLinux_arm64_MD5: 'c8741e2024a0daf6274dd510ad1bb0e9',
 
-    //Release 2.0.2
-    // https://github.com/blockstack/stacks-blockchain/releases/tag/2.0.2
-    stacksNodeMainnetDarwin_MD5: '',
-    stacksNodeMainnetLinux_x64_MD5: '',
-    stacksNodeMainnetLinux_arm64_MD5: ''
+    //Release 2.0.4
+    // https://github.com/blockstack/stacks-blockchain/releases/tag/2.0.4
+    stacksNodeMainnetDarwin_MD5: '6b239855ea50461dd157a4da7420622c',
+    stacksNodeMainnetLinux_x64_MD5: '59a765cd1b3e5e6746be8b4fbd80d2e6',
+    stacksNodeMainnetLinux_arm64_MD5: 'a3a35e6f8d8e25c72ba40bf5bcc3b430'
 
 }
 
