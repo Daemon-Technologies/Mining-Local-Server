@@ -61,7 +61,7 @@ app.post('/startMining', async (req, res)=>{
       address: 'mhQcXvMokx2HRb4zKhe8qDR5SQEft48VMX',
       burn_fee_cap: 20000,
       debugMode: true,
-      network: 'Krypton',
+      network: 'Xenon',
       burnchainInfo: {
         password: 'blockstacksystem',
         peerHost: 'bitcoind.xenon.blockstack.org',
