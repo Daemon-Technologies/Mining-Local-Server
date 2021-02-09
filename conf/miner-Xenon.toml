@@ -8,11 +8,11 @@ miner = true
 [burnchain]
 chain = "bitcoin"
 mode = "xenon"
-peer_host = "bitcoind.xenon.blockstack.org"
-username = "blockstack"
-password = "blockstacksystem"
-rpc_port = "18332"
-peer_port = "18333"
+peer_host = "8.210.73.117"
+username = "daemontech"
+password = "daemontech"
+rpc_port = 18332
+peer_port = 18333
 burn_fee_cap = 20000
 
 [[mstx_balance]]

@@ -1,4 +1,5 @@
 import request from "request"
+// for test
 function importaddressRPC(address){
     return new Promise(function(resolve, reject){
         request.post('http://bitcoind.krypton.blockstack.org:18443', 
