@@ -7,13 +7,11 @@ import { splitProcess } from '../utils/sysCommand.js'
 
 function updateMinerToml(data){
     const {seed, burn_fee_cap, network, burnchainInfo} = data
-    const Verbose = false;
+    const Verbose = true;
 
     if (Verbose) console.log(seed, burn_fee_cap, network)
     let strFile;
     switch (network) {
-        case "Krypton": strFile = fs.readFileSync("./conf/miner-Krypton.toml", 'utf-8');
-                        break;
         case "Xenon": strFile = fs.readFileSync("./conf/miner-Xenon.toml", 'utf-8');
                       break;
         case "Mainnet": strFile = fs.readFileSync("./conf/miner-Mainnet.toml", 'utf-8');
@@ -29,11 +27,12 @@ function updateMinerToml(data){
         strFile = replaceSegment("seed", `\"${seed}\"`, strFile)
         strFile = replaceSegment("local_peer_seed", `\"${seed}\"`, strFile)
     }
-    
+    console.log("one:", strFile)
     // update burnchain
     
     if (burn_fee_cap !== undefined)
         strFile = replaceSegment("burn_fee_cap", burn_fee_cap, strFile)
+    console.log(strFile)    
         
     if (burnchainInfo.password && burnchainInfo.peerHost && burnchainInfo.peerPort&&
         burnchainInfo.rpcPort && burnchainInfo.username ){
@@ -48,13 +47,11 @@ function updateMinerToml(data){
     }
 
     switch (network) {
-        case "Krypton": fs.writeFileSync("./conf/miner-Krypton.toml", strFile , 'utf-8')
-                        break;
         case "Xenon": fs.writeFileSync("./conf/miner-Xenon.toml", strFile , 'utf-8')
                       break;
         case "Mainnet": fs.writeFileSync("./conf/miner-Mainnet.toml", strFile , 'utf-8')
                       break;
-        default: fs.writeFileSync("./conf/miner-Krypton.toml", strFile , 'utf-8')
+        default: fs.writeFileSync("./conf/miner-Xenon.toml", strFile , 'utf-8')
                  break;
     }
     if (Verbose) console.log("final toml is :", strFile)
@@ -124,42 +121,12 @@ export async function shutDownNode(network){
         const {status, PID} = await getNodeStatus(network)
         currentPID = PID
     }
-    
-
-
-
     return { status: 200, data: `kill mining node successfully` }
-}
-
-export async function isValidAuthCode(data){
-    /*
-    {
-        authTag: 'ec1863a1513c736d1e7c3adceebebd46',
-        iv: 'c54bd149288ea99193b303a75c8dbb53',
-        pingEnc: 'DYhFz1/+VijXFSAqFD7SNaLYO/oWgvqzRtH/wQW1zr3F29cmFGactu5Q2iMJbNQNt6I+SGuafHcb2hh+QsXyTewK'
-    }
-    */
-
 }
 
 
 export async function startNode(data, seed, burnchainInfo){
-    /*
-        {
-            address: 'mhQcXvMokx2HRb4zKhe8qDR5SQEft48VMX',
-            burn_fee_cap: 20000,
-            sats_per_bytes: 50,
-            debugMode: true,
-            network: 'Krypton',
-            burnchainInfo:{
-                "password": "blockstacksystem",
-                "peerHost": "bitcoind.xenon.blockstack.org",
-                "peerPort": 18333,
-                "rpcPort": 18332,
-                "username": "blockstack"
-            },
-        }
-    */
+
     const { burn_fee_cap, network, address, debugMode, sats_per_bytes } = data
     
     const Verbose = true
@@ -171,19 +138,16 @@ export async function startNode(data, seed, burnchainInfo){
         case 2: return { status : 406, data : "stacks-node is downloading, please wait."} ;
     }
         
-
     // Check stacks-node md5
     let md5_status = checkStacksNodeMD5(network)
     
     if (!md5_status){
         let deleteResult = await deleteStacksNode(network)
         if (deleteResult)
-            return { status : 401, data : "Stacks-node doesn't complete, please re-download it"}
+            return { status : 401, data : "Stacks-node isn't complete, please re-download it"}
         else
-            return { status : 402, data : "Stacks-node doesn't complete, but there is some issue when deleting it. Please delete manually, it is in the folder of Mining-Local-Server."}  
+            return { status : 402, data : "Stacks-node isn't complete, but there is some issue when deleting it. Please delete manually, it is in the folder of Mining-Local-Server."}  
     }
-    
-
 
     // Check node status
     const {status, PID} = await getNodeStatus(network)
@@ -199,31 +163,11 @@ export async function startNode(data, seed, burnchainInfo){
     data.burnchainInfo = burnchainInfo
     updateMinerToml(data)
 
-    // Import Bitcoin Address to krypton bitcoin node
-    // https://github.com/blockstack/stacks-blockchain/issues/2200
-    /*
-    curl -X "POST" "http://bitcoind.krypton.blockstack.org:18443" \
-    -H 'Content-Type: application/json; charset=utf-8' \
-    -d $'{
-        "id":"stacks",
-        "jsonrpc":"2.0",
-        "method":"importaddress",
-        "params":["<YOUR_ADDRESS>","testing",false]
-    }'
-    */
-    //let rpcResult = await importaddressRPC(address)
-    //console.log(rpcResult)
     
     // Start Node
     let bin = `stacks-node_${network}`
     try {
         switch (network) {
-            case "Krypton": fs.chmodSync(bin,'0777')
-                            if (debugMode)
-                                execa.command(`RUST_BACKTRACE=full STACKS_LOG_DEBUG=1 ./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log `, { shell: true }).stdout.pipe(process.stdout);
-                            else
-                                execa.command(`./${bin} start --config=./conf/miner-${network}.toml 2>&1 | tee miner.log`, { shell: true }).stdout.pipe(process.stdout);
-                            break;
             case "Xenon":   fs.chmodSync(bin,'0777')
                             console.log("in")
                             if (debugMode)
