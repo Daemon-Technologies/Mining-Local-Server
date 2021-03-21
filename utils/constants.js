@@ -34,10 +34,10 @@ const constants = {
     stacksNodeXenonLinux_arm64_MD5: 'c8741e2024a0daf6274dd510ad1bb0e9',
 
     //Release 2.0.4
-    // https://github.com/blockstack/stacks-blockchain/releases/tag/2.0.4
-    stacksNodeMainnetDarwin_MD5: '6b239855ea50461dd157a4da7420622c',
-    stacksNodeMainnetLinux_x64_MD5: '59a765cd1b3e5e6746be8b4fbd80d2e6',
-    stacksNodeMainnetLinux_arm64_MD5: 'a3a35e6f8d8e25c72ba40bf5bcc3b430'
+    // https://github.com/blockstack/stacks-blockchain/releases/tag/2.0.10
+    stacksNodeMainnetDarwin_MD5: '3cf9e8a41f2223e2ee04426dfffdf66f',
+    stacksNodeMainnetLinux_x64_MD5: '5a11431e12aece3dc7a54a3afc286d1e',
+    stacksNodeMainnetLinux_arm64_MD5: 'e4336a2343bd7f61e6a7899b648632c2'
 
 }
 
