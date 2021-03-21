@@ -40,23 +40,11 @@ export function getStacksNodeMD5(network){
 
 export async function checkStacksNodeMD5(network){
     let md5Result = await getStacksNodeMD5(network);
-    let md5Standard = constants.stacksNodeKryptonDarwin_MD5;
+    let md5Standard = constants.stacksNodeXenonDarwin_MD5;
     let result = false;  
     let system = selectSystem();
     let arc = selectArc();
     switch (`${network}_${system}`){
-        case "Krypton_darwin" : md5Standard = constants.stacksNodeKryptonDarwin_MD5;
-                                break;
-        case "Krypton_linux" :  switch (arc){
-                                    case "x64" : md5Standard = constants.stacksNodeKryptonLinux_x64_MD5;
-                                                 break;
-                                    case "arm" : md5Standard = constants.stacksNodeKryptonLinux_arm64_MD5; 
-                                                 break;
-                                    case "arm64" : md5Standard = constants.stacksNodeKryptonLinux_arm64_MD5; 
-                                                 break;
-                                    default : console.log("no such arc:", arc); break;
-                                }
-                                break;
         case "Xenon_darwin" :   md5Standard = constants.stacksNodeXenonDarwin_MD5;
                                 break;
         case "Xenon_linux":     switch (arc){
@@ -65,6 +53,18 @@ export async function checkStacksNodeMD5(network){
                                     case "arm" : md5Standard = constants.stacksNodeXenonLinux_arm64_MD5; 
                                                   break;
                                     case "arm64" : md5Standard = constants.stacksNodeXenonLinux_arm64_MD5;
+                                                   break;
+                                    default : console.log("no such arc:", arc); break;
+                                }
+                                break;
+        case "Mainnet_darwin" :   md5Standard = constants.stacksNodeMainnetDarwin_MD5;
+                                break;
+        case "Mainnet_linux":     switch (arc){
+                                    case "x64" :  md5Standard = constants.stacksNodeMainnetLinux_x64_MD5;
+                                                  break;
+                                    case "arm" : md5Standard = constants.stacksNodeMainnetLinux_arm64_MD5; 
+                                                  break;
+                                    case "arm64" : md5Standard = constants.stacksNodeMainnetLinux_arm64_MD5;
                                                    break;
                                     default : console.log("no such arc:", arc); break;
                                 }
@@ -89,19 +89,30 @@ export function deleteStacksNode(network){
 }
 
 export function replaceSegment(keyword, value ,strFile){
-    const Verbose = false;
+    const Verbose = true;
     let start = strFile.search(keyword)
     let end = start
-    while (end <= strFile.length){
-        if (strFile.charAt(end) == '\n')
+
+    // not found keyword, return native strFile
+    if (start == -1) return strFile
+
+    while (end < strFile.length){
+        if (strFile.charAt(end) == '\n') {
+            end++
             break;
+        }
         end++
     }
     if (Verbose) console.log(start, end)
     
     let injection = `${keyword} = ${value}\n`;
-    if (Verbose) console.log("injection", injection)
-    let result = strFile.slice(0, start) + injection + strFile.slice(end - strFile.length + 1) 
+    if (Verbose) {
+        console.log("injection before", strFile.slice(0, start))
+        console.log("injection", injection)
+        console.log("injection end", strFile.slice(end - strFile.length + 1))
+        console.log(end, strFile.length)
+    }
+    let result = strFile.slice(0, start) + injection + strFile.slice(end, strFile.length) 
 
     return result
 }
@@ -128,20 +139,9 @@ export async function isNodeStart(commands, network){
 function selectStacksNodeURL(network){
     let system = selectSystem()
     let arc = selectArc()
-    let url = constants.stacksNodeKryptonDarwin;
+    let url = constants.stacksNodeXenonDarwin;
     switch (`${network}_${system}`){
-        case "Krypton_darwin" : url = constants.stacksNodeKryptonDarwin;
-                                break;
-        case "Krypton_linux" :  switch (arc){
-                                    case "x64" : url = constants.stacksNodeKryptonLinux_x64;
-                                                 break;
-                                    case "arm" : url = constants.stacksNodeKryptonLinux_arm64; 
-                                                 break;
-                                    case "arm64" : url = constants.stacksNodeKryptonLinux_arm64; 
-                                                 break;
-                                    default : console.log("no such arc:", arc); break;
-                                }
-                                break;
+
         case "Xenon_darwin" :   url = constants.stacksNodeXenonDarwin;
                                 break;
         case "Xenon_linux":     switch (arc){
@@ -150,6 +150,18 @@ function selectStacksNodeURL(network){
                                     case "arm" : url = constants.stacksNodeXenonLinux_arm64; 
                                                   break;
                                     case "arm64" : url = constants.stacksNodeXenonLinux_arm64
+                                                   break;
+                                    default : console.log("no such arc:", arc); break;
+                                }
+                                break;
+        case "Mainnet_darwin" :   url = constants.stacksNodeMainnetDarwin;
+                                break;
+        case "Mainnet_linux":     switch (arc){
+                                    case "x64" :  url = constants.stacksNodeMainnetLinux_x64;
+                                                  break;
+                                    case "arm" : url = constants.stacksNodeMainnetLinux_arm64; 
+                                                  break;
+                                    case "arm64" : url = constants.stacksNodeMainnetLinux_arm64
                                                    break;
                                     default : console.log("no such arc:", arc); break;
                                 }
