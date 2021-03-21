@@ -17,9 +17,9 @@ const constants = {
     stacksNodeXenonLinux_x64: 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.0.0/stacks-node-linux-x64',
     stacksNodeXenonLinux_arm64: 'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.0.0/stacks-node-linux-arm64',
     
-    stacksNodeMainnetDarwin:'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.1.0/stacks-node-mac',
-    stacksNodeMainnetLinux_x64:'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.1.0/stacks-node-linux-x64',
-    stacksNodeMainnetLinux_arm64:'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.1.0/stacks-node-linux-arm64',
+    stacksNodeMainnetDarwin:'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.1.2/stacks-node-mac',
+    stacksNodeMainnetLinux_x64:'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.1.2/stacks-node-linux-x64',
+    stacksNodeMainnetLinux_arm64:'https://github.com/Daemon-Technologies/Mining-Bot/releases/download/2.1.2/stacks-node-linux-arm64',
     // Mining-Bot Release MD5
     //Release v24.0.0.0-xenon
     //https://github.com/blockstack/stacks-blockchain/releases/tag/v24.0.0.0-xenon
@@ -33,7 +33,7 @@ const constants = {
     stacksNodeXenonLinux_x64_MD5: '750489f0ee76791cfa169cc6dbb97b88',
     stacksNodeXenonLinux_arm64_MD5: 'c8741e2024a0daf6274dd510ad1bb0e9',
 
-    //Release 2.0.4
+    //Release 2.0.10
     // https://github.com/blockstack/stacks-blockchain/releases/tag/2.0.10
     stacksNodeMainnetDarwin_MD5: '3cf9e8a41f2223e2ee04426dfffdf66f',
     stacksNodeMainnetLinux_x64_MD5: '5a11431e12aece3dc7a54a3afc286d1e',
